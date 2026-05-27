@@ -1,0 +1,257 @@
+:root {
+  --bg: #0a1208;
+  --panel: #121c10;
+  --border: #2d4a22;
+  --gold: #c9a227;
+  --neon: #39ff14;
+  --neon-dim: #1a8f0f;
+  --text: #d8e8d0;
+  --muted: #7a9a6e;
+  --danger: #ff4444;
+  --pixel-font: 'Press Start 2P', cursive;
+  --ui-font: 'Noto Sans TC', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ui-font);
+  image-rendering: pixelated;
+}
+
+.app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 12px 14px 48px;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 3px solid var(--border);
+}
+
+.app-header img {
+  width: 52px;
+  height: 52px;
+  border: 2px solid var(--gold);
+  border-radius: 8px;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-family: var(--pixel-font);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--neon);
+  text-shadow: 0 0 8px var(--neon-dim);
+}
+
+.app-header p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.pixel-panel {
+  background: var(--panel);
+  border: 3px solid var(--border);
+  box-shadow: 4px 4px 0 #000;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.pixel-panel h2 {
+  margin: 0 0 10px;
+  font-family: var(--pixel-font);
+  font-size: 9px;
+  color: var(--gold);
+}
+
+.module-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.tab {
+  font-family: var(--pixel-font);
+  font-size: 7px;
+  padding: 8px 10px;
+  background: #1a2614;
+  color: var(--muted);
+  border: 2px solid var(--border);
+  cursor: pointer;
+}
+
+.tab.active {
+  color: var(--bg);
+  background: var(--neon);
+  border-color: var(--neon);
+  box-shadow: 0 0 10px var(--neon-dim);
+}
+
+.universal-input {
+  display: grid;
+  gap: 8px;
+}
+
+.universal-input textarea {
+  width: 100%;
+  min-height: 72px;
+  resize: vertical;
+  background: #0d160a;
+  color: var(--text);
+  border: 2px solid var(--border);
+  padding: 10px;
+  font-family: var(--ui-font);
+  font-size: 14px;
+}
+
+.universal-input textarea:focus {
+  outline: none;
+  border-color: var(--neon);
+}
+
+.drop-zone {
+  border: 2px dashed var(--border);
+  padding: 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.drop-zone.dragover {
+  border-color: var(--neon);
+  background: #152010;
+  color: var(--neon);
+}
+
+.drop-zone img.preview {
+  max-width: 100%;
+  max-height: 160px;
+  margin-top: 8px;
+  border: 2px solid var(--gold);
+}
+
+.row-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  font-family: var(--pixel-font);
+  font-size: 7px;
+  padding: 10px 12px;
+  border: 2px solid var(--border);
+  background: #1e2e16;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--neon-dim);
+  border-color: var(--neon);
+  color: #041004;
+}
+
+.btn-gold {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.flash {
+  font-size: 12px;
+  padding: 8px;
+  border: 2px solid var(--neon);
+  color: var(--neon);
+  margin-bottom: 8px;
+}
+
+.flash.err {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.data-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.data-list li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.data-list li:last-child {
+  border-bottom: none;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-family: var(--pixel-font);
+  font-size: 10px;
+  color: var(--neon);
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.inline-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.inline-form input {
+  background: #0d160a;
+  border: 2px solid var(--border);
+  color: var(--text);
+  padding: 8px;
+  font-size: 14px;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 6px;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  margin-left: 6px;
+}
+
+.badge.arrived {
+  border-color: var(--neon);
+  color: var(--neon);
+}
