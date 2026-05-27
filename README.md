@@ -33,6 +33,10 @@ Horus/
 
 ## 2. Railway 後端
 
+從 GitHub 部署時，repo **根目錄**的 `railway.toml` 會用 `backend/Dockerfile` 建置（不必手動設 Root Directory）。
+
+若仍失敗，到 Railway → Service → **Settings → Root Directory** 填 `backend` 後 Redeploy。
+
 ```bash
 cd backend
 cp ../.env.example .env   # 填入變數

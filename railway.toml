@@ -1,0 +1,8 @@
+# Railway 從 repo 根目錄部署時，由此檔指定建置 backend
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/api/health"
+restartPolicyType = "ON_FAILURE"
