@@ -30,38 +30,7 @@ body,
 .app {
   max-width: 960px;
   margin: 0 auto;
-  padding: 12px 14px 48px;
-}
-
-.app-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-  padding-bottom: 12px;
-  border-bottom: 3px solid var(--border);
-}
-
-.app-header img {
-  width: 52px;
-  height: 52px;
-  border: 2px solid var(--gold);
-  border-radius: 8px;
-}
-
-.app-header h1 {
-  margin: 0;
-  font-family: var(--pixel-font);
-  font-size: 11px;
-  line-height: 1.6;
-  color: var(--neon);
-  text-shadow: 0 0 8px var(--neon-dim);
-}
-
-.app-header p {
-  margin: 4px 0 0;
-  font-size: 12px;
-  color: var(--muted);
+  padding: max(12px, env(safe-area-inset-top)) 14px max(48px, env(safe-area-inset-bottom));
 }
 
 .pixel-panel {

@@ -29,14 +29,6 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="app-header">
-        <img src="/icon.png" alt="Horus" width={52} height={52} />
-        <div>
-          <h1>HORUS</h1>
-          <p>荷魯斯之眼 · 全域矩陣中控台</p>
-        </div>
-      </header>
-
       {flash ? <div className={flash.err ? 'flash err' : 'flash'}>{flash.text}</div> : null}
 
       <UniversalInput
