@@ -1,4 +1,4 @@
-FROM node:22-alpine AS build
+FROM node:22-slim AS build
 WORKDIR /app
 COPY backend/package.json backend/package-lock.json* ./
 RUN npm ci
@@ -6,7 +6,7 @@ COPY backend/tsconfig.json ./
 COPY backend/src ./src
 RUN npm run build
 
-FROM node:22-alpine
+FROM node:22-slim
 WORKDIR /app
 ENV NODE_ENV=production
 COPY backend/package.json backend/package-lock.json* ./

@@ -6,6 +6,7 @@ import { confirmDraft } from '../services/inventory.js'
 import { createLycheeShipment } from '../services/lychee.js'
 import { recordPosSale, getProfitSummary } from '../services/pos.js'
 import { getSupabase } from '../lib/supabase.js'
+import { checkSupabaseConnection } from '../lib/supabase-check.js'
 import { ideasRouter } from './ideas.js'
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } })
@@ -17,6 +18,12 @@ apiRouter.use('/ideas', ideasRouter)
 
 apiRouter.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'horus-backend' })
+})
+
+/** 診斷 Supabase 連線（不洩漏 key） */
+apiRouter.get('/supabase-check', async (_req, res) => {
+  const report = await checkSupabaseConnection()
+  res.status(report.ok ? 200 : 503).json(report)
 })
 
 /** 模組一：全域語意分流器 */

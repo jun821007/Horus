@@ -1,5 +1,8 @@
+import dns from 'node:dns'
 import cors from 'cors'
 import express from 'express'
+
+dns.setDefaultResultOrder('ipv4first')
 import { assertBackendConfig, config } from './config.js'
 import { apiRouter } from './routes/api.js'
 import { cronRouter } from './routes/cron.js'
