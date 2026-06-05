@@ -6,10 +6,14 @@ import { confirmDraft } from '../services/inventory.js'
 import { createLycheeShipment } from '../services/lychee.js'
 import { recordPosSale, getProfitSummary } from '../services/pos.js'
 import { getSupabase } from '../lib/supabase.js'
+import { ideasRouter } from './ideas.js'
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } })
 
 export const apiRouter = Router()
+
+/** 想法輸入器（獨立於 /ingest） */
+apiRouter.use('/ideas', ideasRouter)
 
 apiRouter.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'horus-backend' })

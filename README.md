@@ -77,6 +77,14 @@ npm run dev
 
 圖示：`frontend/public/icon.png`（荷魯斯之眼）
 
+## 想法輸入器 P0（見 `docs/IDEA_INPUT_SPEC.md`）
+
+- Tab「想法」子頁：對話 / 待決策 / 分類（地圖、目標顯示即將推出）
+- **不走** `/api/ingest`、不與 Painpoint Hub 共用
+- Supabase：執行 `002_ideas_schema.sql`（若曾跑舊版請先 DROP `idea_*` 表）
+- API：`/api/ideas/*`（`POST { text }`、`PATCH .../decision`）
+- P1～P3 另開 PR（拖曳排序、敘事地圖、目標任務）
+
 ## 模組對照
 
 1. **全域輸入** → `POST /api/ingest`（文字 → Flash；截圖 → Pro）

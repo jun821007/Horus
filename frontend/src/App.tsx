@@ -5,8 +5,9 @@ import { InventoryDrafts } from './components/InventoryDrafts'
 import { RemindersPanel } from './components/RemindersPanel'
 import { LycheePanel } from './components/LycheePanel'
 import { ProfitDashboard } from './components/ProfitDashboard'
+import { IdeasPanel } from './components/IdeasPanel'
 
-type Module = 'shipping' | 'inventory' | 'reminders' | 'lychee' | 'profit'
+type Module = 'shipping' | 'inventory' | 'reminders' | 'lychee' | 'profit' | 'ideas'
 
 const TABS: Array<{ id: Module; label: string }> = [
   { id: 'shipping', label: '單號' },
@@ -14,6 +15,7 @@ const TABS: Array<{ id: Module; label: string }> = [
   { id: 'reminders', label: '提醒' },
   { id: 'lychee', label: '荔枝' },
   { id: 'profit', label: '毛利' },
+  { id: 'ideas', label: '想法' },
 ]
 
 export default function App() {
@@ -28,16 +30,18 @@ export default function App() {
   }
 
   return (
-    <div className="app">
+    <div className={`app ${module === 'ideas' ? 'app--ideas' : ''}`}>
       {flash ? <div className={flash.err ? 'flash err' : 'flash'}>{flash.text}</div> : null}
 
-      <UniversalInput
-        onResult={showMsg}
-        onSuccess={() => {
-          bump()
-          setModule('inventory')
-        }}
-      />
+      {module !== 'ideas' ? (
+        <UniversalInput
+          onResult={showMsg}
+          onSuccess={() => {
+            bump()
+            setModule('inventory')
+          }}
+        />
+      ) : null}
 
       <nav className="module-tabs">
         {TABS.map((t) => (
@@ -59,6 +63,7 @@ export default function App() {
       {module === 'reminders' ? <RemindersPanel refreshKey={refreshKey} /> : null}
       {module === 'lychee' ? <LycheePanel refreshKey={refreshKey} onMessage={showMsg} /> : null}
       {module === 'profit' ? <ProfitDashboard refreshKey={refreshKey} onMessage={showMsg} /> : null}
+      {module === 'ideas' ? <IdeasPanel onMessage={showMsg} /> : null}
     </div>
   )
 }
