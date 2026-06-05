@@ -3,6 +3,15 @@
 
 create extension if not exists "pgcrypto";
 
+-- 若未跑過 001，仍需要 updated_at trigger 函式
+create or replace function public.set_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
 -- ─── 分類樹 ───
 create table if not exists public.idea_categories (
   id uuid primary key default gen_random_uuid(),

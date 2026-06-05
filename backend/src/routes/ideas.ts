@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { z } from 'zod'
+import { formatError } from '../lib/errors.js'
 import {
   appendIdeaMessage,
   applyDecision,
@@ -20,7 +21,7 @@ ideasRouter.get('/categories', async (req, res) => {
     const items = await listCategories(activeOnly)
     res.json({ ok: true, items })
   } catch (e) {
-    res.status(500).json({ ok: false, error: String(e) })
+    res.status(500).json({ ok: false, error: formatError(e) })
   }
 })
 
@@ -37,7 +38,7 @@ ideasRouter.post('/categories', async (req, res) => {
     const item = await createCategory(parsed.data)
     res.status(201).json({ ok: true, item })
   } catch (e) {
-    res.status(400).json({ ok: false, error: String(e) })
+    res.status(400).json({ ok: false, error: formatError(e) })
   }
 })
 
@@ -46,7 +47,7 @@ ideasRouter.patch('/categories/:id', async (req, res) => {
     const item = await updateCategory(req.params.id, req.body)
     res.json({ ok: true, item })
   } catch (e) {
-    res.status(400).json({ ok: false, error: String(e) })
+    res.status(400).json({ ok: false, error: formatError(e) })
   }
 })
 
@@ -55,7 +56,7 @@ ideasRouter.delete('/categories/:id', async (req, res) => {
     await deleteCategory(req.params.id)
     res.json({ ok: true })
   } catch (e) {
-    res.status(400).json({ ok: false, error: String(e) })
+    res.status(400).json({ ok: false, error: formatError(e) })
   }
 })
 
@@ -66,7 +67,7 @@ ideasRouter.get('/', async (req, res) => {
     const items = await listIdeas({ status, category_id })
     res.json({ ok: true, items })
   } catch (e) {
-    res.status(500).json({ ok: false, error: String(e) })
+    res.status(500).json({ ok: false, error: formatError(e) })
   }
 })
 
@@ -75,7 +76,7 @@ ideasRouter.get('/:id', async (req, res) => {
     const detail = await getIdeaDetail(req.params.id)
     res.json({ ok: true, ...detail })
   } catch (e) {
-    res.status(404).json({ ok: false, error: String(e) })
+    res.status(404).json({ ok: false, error: formatError(e) })
   }
 })
 
@@ -88,7 +89,7 @@ ideasRouter.post('/', async (req, res) => {
     const result = await createIdea(parsed.data.text)
     res.status(201).json({ ok: true, ...result })
   } catch (e) {
-    res.status(400).json({ ok: false, error: String(e) })
+    res.status(400).json({ ok: false, error: formatError(e) })
   }
 })
 
@@ -99,7 +100,7 @@ ideasRouter.post('/:id/messages', async (req, res) => {
     const result = await appendIdeaMessage(req.params.id, parsed.data.text)
     res.json({ ok: true, ...result })
   } catch (e) {
-    res.status(400).json({ ok: false, error: String(e) })
+    res.status(400).json({ ok: false, error: formatError(e) })
   }
 })
 
@@ -114,6 +115,6 @@ ideasRouter.patch('/:id/decision', async (req, res) => {
     const idea = await applyDecision(req.params.id, parsed.data.action)
     res.json({ ok: true, idea })
   } catch (e) {
-    res.status(400).json({ ok: false, error: String(e) })
+    res.status(400).json({ ok: false, error: formatError(e) })
   }
 })
