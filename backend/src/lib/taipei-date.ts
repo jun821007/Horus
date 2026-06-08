@@ -1,4 +1,4 @@
-﻿const TZ = 'Asia/Taipei'
+const TZ = 'Asia/Taipei'
 
 export function taipeiYmd(date = new Date()): string {
   return new Intl.DateTimeFormat('en-CA', {

@@ -26,6 +26,9 @@ export const config = {
   instockApiBaseUrl: trim('INSTOCK_API_BASE_URL'),
   instockHorusReadSecret: trim('INSTOCK_HORUS_READ_SECRET'),
   instockAppUrl: trim('INSTOCK_APP_URL'),
+  orderToolApiBaseUrl: trim('ORDER_TOOL_API_BASE_URL'),
+  orderToolHorusReadSecret: trim('ORDER_TOOL_HORUS_READ_SECRET'),
+  orderToolAppUrl: trim('ORDER_TOOL_APP_URL'),
 }
 
 export function validateSupabaseUrl(url: string): string | null {

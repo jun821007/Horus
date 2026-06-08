@@ -1,4 +1,4 @@
-export type IdeaCategory = {
+﻿export type IdeaCategory = {
   id: string
   parent_id: string | null
   name: string
@@ -38,4 +38,5 @@ export type IdeaPlan = {
   created_at: string
 }
 
-export type IdeasSubTab = 'chat' | 'pending' | 'categories' | 'map' | 'goals'
+export type IdeasSubTab = 'capture' | 'pending' | 'categories' | 'map' | 'goals'
+

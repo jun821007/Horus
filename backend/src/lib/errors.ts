@@ -1,4 +1,4 @@
-﻿function errorCauseChain(e: unknown): string[] {
+function errorCauseChain(e: unknown): string[] {
   const parts: string[] = []
   let cur: unknown = e
   for (let i = 0; i < 4 && cur; i++) {

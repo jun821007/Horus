@@ -39,7 +39,7 @@ export default function App() {
     window.setTimeout(() => setToast(null), 3500)
   }
 
-  const showFab = tab !== 'ideas'
+  const showFab = tab !== 'ideas' && tab !== 'shipping'
   const headerTitle = subPage ? SUB_TITLES[subPage] : TAB_TITLES[tab]
 
   return (
@@ -72,7 +72,7 @@ export default function App() {
       </main>
 
       {showFab ? (
-        <button type="button" className="fab" onClick={() => setInputOpen(true)} aria-label="快速輸入">+</button>
+        <button type="button" className="fab" onClick={() => setInputOpen(true)} aria-label="入庫截圖">+</button>
       ) : null}
 
       <InputSheet

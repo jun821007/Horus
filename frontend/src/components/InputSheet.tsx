@@ -28,8 +28,8 @@ export function InputSheet({ open, onClose, onResult, onSuccess }: Props) {
   }
 
   const submit = async () => {
-    if (!text.trim() && !file) {
-      onResult('請輸入文字或貼上採購截圖', true)
+    if (!file) {
+      onResult('請貼上淘寶採購截圖（必填）', true)
       return
     }
     setBusy(true)
@@ -76,7 +76,7 @@ export function InputSheet({ open, onClose, onResult, onSuccess }: Props) {
       <div className="sheet" role="dialog" aria-label="全域輸入">
         <div className="sheet-handle" />
         <div className="sheet-header">
-          <h2>快速輸入</h2>
+          <h2>入庫截圖</h2>
           <button type="button" className="sheet-close" onClick={onClose} aria-label="關閉">×</button>
         </div>
         <div className="sheet-body">
@@ -85,7 +85,7 @@ export function InputSheet({ open, onClose, onResult, onSuccess }: Props) {
             value={text}
             onChange={(e) => setText(e.target.value)}
             onPaste={onPaste}
-            placeholder="單號＋內容物，或貼上淘寶採購截圖說明"
+            placeholder="貼上淘寶採購截圖，建立入庫草稿"
           />
           <div
             className={drag ? 'drop-zone dragover' : 'drop-zone'}
@@ -122,3 +122,5 @@ export function InputSheet({ open, onClose, onResult, onSuccess }: Props) {
     </>
   )
 }
+
+

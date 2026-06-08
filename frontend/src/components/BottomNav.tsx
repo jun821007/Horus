@@ -1,4 +1,4 @@
-﻿import type { AppTab } from '../types/app'
+import type { AppTab } from '../types/app'
 
 const TABS: Array<{ id: AppTab; label: string; icon: string }> = [
   { id: 'home', label: '首頁', icon: '🏠' },

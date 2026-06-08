@@ -17,8 +17,14 @@ export function IdeaPendingList({ categories, onOpen }: Props) {
   const [items, setItems] = useState<IdeaRecord[]>([])
 
   const load = useCallback(async () => {
-    const res = await apiGet<{ ok: boolean; items: IdeaRecord[] }>('/api/ideas?status=pending')
-    const sorted = [...res.items].sort((a, b) => {
+    const [pendingRes, processingRes] = await Promise.all([
+      apiGet<{ ok: boolean; items: IdeaRecord[] }>('/api/ideas?status=pending'),
+      apiGet<{ ok: boolean; items: IdeaRecord[] }>('/api/ideas?status=processing'),
+    ])
+    const merged = [...processingRes.items, ...pendingRes.items]
+    const sorted = [...merged].sort((a, b) => {
+      if (a.status === 'processing' && b.status !== 'processing') return -1
+      if (b.status === 'processing' && a.status !== 'processing') return 1
       const ma = a.priority_manual ?? 9999
       const mb = b.priority_manual ?? 9999
       if (ma !== mb) return ma - mb
@@ -30,7 +36,11 @@ export function IdeaPendingList({ categories, onOpen }: Props) {
     setItems(sorted)
   }, [])
 
-  useEffect(() => { void load().catch(() => setItems([])) }, [load])
+  useEffect(() => {
+    void load().catch(() => setItems([]))
+    const timer = window.setInterval(() => { void load().catch(() => {}) }, 5000)
+    return () => window.clearInterval(timer)
+  }, [load])
 
   const catName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? '—'
   const fmtDate = (iso: string) => {
@@ -47,9 +57,15 @@ export function IdeaPendingList({ categories, onOpen }: Props) {
           <button key={idea.id} type="button" className="card" style={{ width: '100%', textAlign: 'left' }} onClick={() => onOpen(idea.id)}>
             <div className="card-header">
               <h3 className="card-title">{idea.title}</h3>
-              <span className={priorityChip(idea.priority)}>{idea.priority ?? '—'}</span>
+              {idea.status === 'processing' ? (
+                <span className="chip muted">分析中</span>
+              ) : (
+                <span className={priorityChip(idea.priority)}>{idea.priority ?? '—'}</span>
+              )}
             </div>
-            <p className="card-meta">{catName(idea.category_id)} · {fmtDate(idea.updated_at)}</p>
+            <p className="card-meta">
+              {idea.status === 'processing' ? 'AI 分析中…' : `${catName(idea.category_id)} · ${fmtDate(idea.updated_at)}`}
+            </p>
           </button>
         ))
       )}

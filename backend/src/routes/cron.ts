@@ -1,8 +1,9 @@
-import { Router } from 'express'
+﻿import { Router } from 'express'
 import { requireCronSecret } from '../middleware/cronAuth.js'
 import { runDailyTrackingCron } from '../services/shipping.js'
 import { runShipReminderCron } from '../services/lychee.js'
 import { runHotSellerReminderCron, runLycheeTomorrowReminderCron } from '../services/integration-cron.js'
+import { runOrderToolSyncCron } from '../services/order-tool-sync.js'
 
 export const cronRouter = Router()
 
@@ -11,6 +12,15 @@ cronRouter.use(requireCronSecret)
 cronRouter.post('/tracking-daily', async (_req, res) => {
   try {
     const result = await runDailyTrackingCron()
+    res.json({ ok: true, ...result })
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e) })
+  }
+})
+
+cronRouter.post('/order-tool-sync', async (_req, res) => {
+  try {
+    const result = await runOrderToolSyncCron(7)
     res.json({ ok: true, ...result })
   } catch (e) {
     res.status(500).json({ ok: false, error: String(e) })
@@ -46,10 +56,11 @@ cronRouter.post('/ship-reminder', async (_req, res) => {
 
 cronRouter.post('/daily', async (_req, res) => {
   try {
+    const orderTool = await runOrderToolSyncCron(7)
     const tracking = await runDailyTrackingCron()
     const lychee = await runLycheeTomorrowReminderCron()
     const hot = await runHotSellerReminderCron()
-    res.json({ ok: true, tracking, lychee, hot })
+    res.json({ ok: true, orderTool, tracking, lychee, hot })
   } catch (e) {
     res.status(500).json({ ok: false, error: String(e) })
   }

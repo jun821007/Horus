@@ -1,24 +1,23 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { apiGet, apiPatch, apiPost } from '../lib/api'
+﻿import { useCallback, useEffect, useMemo, useState } from 'react'
+import { apiGet, apiPatch } from '../lib/api'
 import { copyText, latestPlanPair, planCopyText } from '../lib/ideas'
 import type { IdeaCategory, IdeaMessage, IdeaPlan, IdeaRecord } from '../types/ideas'
-
 
 function priorityChipClass(priority: string | null | undefined): string {
   if (priority === 'P0') return 'chip danger'
   if (priority === 'P1') return 'chip'
   return 'chip muted'
 }
+
 type Props = {
-  ideaId: string | null
+  ideaId: string
   categories: IdeaCategory[]
+  onBack: () => void
   onMessage: (text: string, err?: boolean) => void
-  onIdeaCreated: (id: string) => void
   onDecision: () => void
 }
 
-export function IdeaChatView({ ideaId, categories, onMessage, onIdeaCreated, onDecision }: Props) {
-  const [draft, setDraft] = useState('')
+export function IdeaDetailView({ ideaId, categories, onBack, onMessage, onDecision }: Props) {
   const [busy, setBusy] = useState(false)
   const [idea, setIdea] = useState<IdeaRecord | null>(null)
   const [messages, setMessages] = useState<IdeaMessage[]>([])
@@ -35,14 +34,16 @@ export function IdeaChatView({ ideaId, categories, onMessage, onIdeaCreated, onD
   }, [])
 
   useEffect(() => {
-    if (!ideaId) {
-      setIdea(null)
-      setMessages([])
-      setPlans([])
-      return
-    }
     void load(ideaId).catch((e) => onMessage(String(e), true))
   }, [ideaId, load, onMessage])
+
+  useEffect(() => {
+    if (idea?.status !== 'processing') return
+    const timer = window.setInterval(() => {
+      void load(ideaId).catch(() => {})
+    }, 3000)
+    return () => window.clearInterval(timer)
+  }, [idea?.status, ideaId, load])
 
   const { plan1, plan2 } = useMemo(() => latestPlanPair(plans), [plans])
   const latestMeta = useMemo(() => {
@@ -55,31 +56,9 @@ export function IdeaChatView({ ideaId, categories, onMessage, onIdeaCreated, onD
     return categories.find((c) => c.id === id)?.name ?? '—'
   }, [categories, idea, latestMeta])
 
-  const canDecide = idea && ['draft', 'pending'].includes(idea.status)
+  const canDecide = idea && idea.status === 'pending' && (plan1 || plan2)
   const adoptedIndex = idea?.adopted_plan_index
-  const canCompose = !idea || ['draft', 'pending'].includes(idea.status)
-
-  const submit = async () => {
-    const text = draft.trim()
-    if (!text || busy) return
-    setBusy(true)
-    try {
-      if (ideaId) {
-        await apiPost(`/api/ideas/${ideaId}/messages`, { text })
-        await load(ideaId)
-      } else {
-        const res = await apiPost<{ ok: boolean; idea: IdeaRecord }>('/api/ideas', { text })
-        onIdeaCreated(res.idea.id)
-        await load(res.idea.id)
-      }
-      setDraft('')
-      onMessage('AI 分析完成')
-    } catch (e) {
-      onMessage(String(e), true)
-    } finally {
-      setBusy(false)
-    }
-  }
+  const isProcessing = idea?.status === 'processing'
 
   const decide = async (action: 'adopt_1' | 'adopt_2' | 'pending' | 'archive') => {
     if (!ideaId || busy) return
@@ -110,28 +89,22 @@ export function IdeaChatView({ ideaId, categories, onMessage, onIdeaCreated, onD
   }
 
   return (
-    <div className="ideas-chat-layout">
+    <div className="ideas-detail">
+      <button type="button" className="btn btn-sm" style={{ marginBottom: 8 }} onClick={onBack}>← 返回待決策</button>
+
+      {isProcessing ? (
+        <div className="empty-state">AI 分析中，請稍候…</div>
+      ) : null}
+
       <div className="ideas-thread">
-        {messages.length === 0 && !busy ? (
-          <div className="empty-state">輸入想法，AI 會回兩個方案</div>
-        ) : null}
         {messages.map((m) => {
-          if (m.role === 'system') {
-            return <div key={m.id} className="bubble system">{m.content}</div>
-          }
-          if (m.role === 'user') {
-            return <div key={m.id} className="bubble user">{m.content}</div>
-          }
-          return (
-            <div key={m.id} className="bubble assistant">
-              {m.content}
-            </div>
-          )
+          if (m.role === 'system') return <div key={m.id} className="bubble system">{m.content}</div>
+          if (m.role === 'user') return <div key={m.id} className="bubble user">{m.content}</div>
+          return <div key={m.id} className="bubble assistant">{m.content}</div>
         })}
-        {busy ? <div className="bubble assistant">思考中…</div> : null}
       </div>
 
-      {(plan1 || plan2) && !busy ? (
+      {(plan1 || plan2) && !isProcessing ? (
         <div className="panel" style={{ marginTop: 8 }}>
           <div style={{ marginBottom: 8 }}>
             <span className="chip">{categoryName}</span>
@@ -168,27 +141,6 @@ export function IdeaChatView({ ideaId, categories, onMessage, onIdeaCreated, onD
           ) : null}
         </div>
       ) : null}
-
-      <div className="ideas-compose-bar">
-        <textarea
-          className="input-field"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="突然想到什麼？"
-          rows={2}
-          disabled={busy || !canCompose}
-        />
-        <button
-          type="button"
-          className="btn btn-primary"
-          disabled={busy || !draft.trim() || !canCompose}
-          onClick={() => void submit()}
-        >
-          {busy ? '思考中…' : '送出'}
-        </button>
-      </div>
     </div>
   )
 }
-
-

@@ -21,7 +21,7 @@ export function ShippingPanel({ refreshKey }: { refreshKey: number }) {
       <h2 className="page-title">單號追蹤</h2>
       <p className="page-desc">{items.length} 筆追蹤中</p>
       {items.length === 0 ? (
-        <div className="empty-state">尚無追蹤單號<br />點右下角 ＋ 快速輸入</div>
+        <div className="empty-state">尚無追蹤單號<br />Order number 最近 7 天已出轉運會自動同步</div>
       ) : (
         items.map((t) => (
           <article key={t.tracking_number} className="card">
@@ -39,3 +39,4 @@ export function ShippingPanel({ refreshKey }: { refreshKey: number }) {
     </div>
   )
 }
+

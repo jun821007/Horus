@@ -1,4 +1,4 @@
-﻿type Props = {
+type Props = {
   message: string | null
   err?: boolean
 }

@@ -1,12 +1,13 @@
 ﻿import { useCallback, useEffect, useState } from 'react'
 import { apiGet } from '../lib/api'
 import type { IdeaCategory, IdeasSubTab } from '../types/ideas'
+import { IdeaCaptureView } from './IdeaCaptureView'
 import { IdeaCategorySettings } from './IdeaCategorySettings'
-import { IdeaChatView } from './IdeaChatView'
+import { IdeaDetailView } from './IdeaDetailView'
 import { IdeaPendingList } from './IdeaPendingList'
 
 const SUB_TABS: Array<{ id: IdeasSubTab; label: string }> = [
-  { id: 'chat', label: '對話' },
+  { id: 'capture', label: '靈感' },
   { id: 'pending', label: '待決策' },
   { id: 'categories', label: '分類' },
 ]
@@ -16,7 +17,7 @@ type Props = {
 }
 
 export function IdeasPanel({ onMessage }: Props) {
-  const [subTab, setSubTab] = useState<IdeasSubTab>('chat')
+  const [subTab, setSubTab] = useState<IdeasSubTab>('capture')
   const [activeIdeaId, setActiveIdeaId] = useState<string | null>(null)
   const [categories, setCategories] = useState<IdeaCategory[]>([])
   const [pendingBump, setPendingBump] = useState(0)
@@ -30,21 +31,17 @@ export function IdeasPanel({ onMessage }: Props) {
 
   const openFromPending = (id: string) => {
     setActiveIdeaId(id)
-    setSubTab('chat')
   }
 
-  const startNewChat = () => {
+  const backToPendingList = () => {
     setActiveIdeaId(null)
-    setSubTab('chat')
+    setPendingBump((n) => n + 1)
   }
 
   return (
     <div className="ideas-panel panel">
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
         <h2 className="page-title" style={{ flex: 1, margin: 0 }}>想法</h2>
-        {subTab === 'chat' ? (
-          <button type="button" className="btn btn-sm btn-primary" onClick={startNewChat}>＋ 新想法</button>
-        ) : null}
       </div>
 
       <div className="segmented">
@@ -53,24 +50,34 @@ export function IdeasPanel({ onMessage }: Props) {
             key={t.id}
             type="button"
             className={subTab === t.id ? 'segmented-btn active' : 'segmented-btn'}
-            onClick={() => setSubTab(t.id)}
+            onClick={() => {
+              setSubTab(t.id)
+              if (t.id !== 'pending') setActiveIdeaId(null)
+            }}
           >
             {t.label}
           </button>
         ))}
       </div>
 
-      {subTab === 'chat' ? (
-        <IdeaChatView
-          ideaId={activeIdeaId}
-          categories={categories}
+      {subTab === 'capture' ? (
+        <IdeaCaptureView
           onMessage={onMessage}
-          onIdeaCreated={(id) => setActiveIdeaId(id)}
-          onDecision={() => setPendingBump((n) => n + 1)}
+          onCaptured={() => setPendingBump((n) => n + 1)}
         />
       ) : null}
 
-      {subTab === 'pending' ? (
+      {subTab === 'pending' && activeIdeaId ? (
+        <IdeaDetailView
+          ideaId={activeIdeaId}
+          categories={categories}
+          onBack={backToPendingList}
+          onMessage={onMessage}
+          onDecision={backToPendingList}
+        />
+      ) : null}
+
+      {subTab === 'pending' && !activeIdeaId ? (
         <IdeaPendingList key={pendingBump} categories={categories} onOpen={openFromPending} />
       ) : null}
 

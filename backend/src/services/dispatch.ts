@@ -1,5 +1,4 @@
-import { classifyAndParse } from '../lib/gemini.js'
-import { ingestTrackingFromGemini, ingestTrackingFromText } from './shipping.js'
+﻿import { classifyAndParse } from '../lib/gemini.js'
 import { createDraftFromOcr } from './inventory.js'
 
 export async function dispatchIngest(
@@ -7,6 +6,13 @@ export async function dispatchIngest(
   image?: { buffer: Buffer; mimeType: string },
 ) {
   const parsed = await classifyAndParse(text, image)
+
+  if (parsed.task_type === 'tracking_text') {
+    return {
+      task_type: 'unknown' as const,
+      message: '單號改由 Order number 自動同步，請改貼淘寶採購截圖建立入庫草稿',
+    }
+  }
 
   if (parsed.task_type === 'taobao_ocr') {
     const result = await createDraftFromOcr(parsed)
@@ -21,22 +27,8 @@ export async function dispatchIngest(
     }
   }
 
-  if (parsed.task_type === 'tracking_text') {
-    const track = await ingestTrackingFromGemini(parsed, text)
-    return {
-      task_type: 'tracking_text' as const,
-      message: `已登記 ${track.carrier} 單號 ${track.tracking_number}`,
-      tracking: track,
-    }
-  }
-
-  if (text.trim()) {
-    const track = await ingestTrackingFromText(text)
-    return {
-      task_type: 'tracking_text' as const,
-      message: `已登記 ${track.carrier} 單號 ${track.tracking_number}`,
-      tracking: track,
-    }
+  if (!image) {
+    return { task_type: 'unknown' as const, message: '請貼上淘寶採購截圖建立入庫草稿' }
   }
 
   return { task_type: 'unknown' as const, message: '無法辨識輸入' }

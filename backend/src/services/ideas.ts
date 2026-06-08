@@ -240,6 +240,45 @@ async function persistAiRound(ideaId: string, analysis: IdeaAnalysisParsed, cate
   return { assistantMsg: assistantMsg as IdeaMessage, plans: (savedPlans ?? []).map(normalizePlanRow) }
 }
 
+async function processIdeaAnalysis(ideaId: string): Promise<void> {
+  const detail = await getIdeaDetail(ideaId)
+  const trimmed = [...detail.messages].reverse().find((m) => m.role === 'user')?.content?.trim()
+  if (!trimmed) throw new Error('找不到想法內容')
+
+  const categories = await listCategories(true)
+  if (categories.length === 0) throw new Error('請先建立至少一個啟用分類')
+
+  const analysis = await analyzeIdeaText(trimmed, categories)
+  const categoryName = categories.find((c) => c.id === analysis.category_id)?.name ?? '其他'
+  await persistAiRound(ideaId, analysis, categoryName)
+
+  const sb = getSupabase()
+  const { error: updErr } = await sb
+    .from('ideas')
+    .update({
+      title: analysis.title,
+      category_id: analysis.category_id,
+      priority: analysis.priority,
+      status: 'pending',
+    })
+    .eq('id', ideaId)
+  if (updErr) throw updErr
+}
+
+function queueIdeaAnalysis(ideaId: string): void {
+  void processIdeaAnalysis(ideaId).catch(async (e) => {
+    const sb = getSupabase()
+    const msg = e instanceof Error ? e.message : String(e)
+    await sb.from('idea_messages').insert({
+      idea_id: ideaId,
+      role: 'system',
+      content: `AI 分析失敗：${msg}`,
+      metadata: { error: true },
+    })
+    await sb.from('ideas').update({ status: 'pending' }).eq('id', ideaId)
+  })
+}
+
 export async function createIdea(text: string) {
   const trimmed = text.trim()
   if (!trimmed) throw new Error('請輸入想法')
@@ -250,7 +289,7 @@ export async function createIdea(text: string) {
   const sb = getSupabase()
   const { data: idea, error: ideaErr } = await sb
     .from('ideas')
-    .insert({ title: trimmed.slice(0, 80), status: 'draft' })
+    .insert({ title: trimmed.slice(0, 80), status: 'processing' })
     .select()
     .single()
   if (ideaErr) throw ideaErr
@@ -262,27 +301,12 @@ export async function createIdea(text: string) {
     .single()
   if (userErr) throw userErr
 
-  const analysis = await analyzeIdeaText(trimmed, categories)
-  const categoryName = categories.find((c) => c.id === analysis.category_id)?.name ?? '其他'
-
-  const { assistantMsg, plans } = await persistAiRound(idea.id, analysis, categoryName)
-
-  const { data: updated, error: updErr } = await sb
-    .from('ideas')
-    .update({
-      title: analysis.title,
-      category_id: analysis.category_id,
-      priority: analysis.priority,
-    })
-    .eq('id', idea.id)
-    .select()
-    .single()
-  if (updErr) throw updErr
+  queueIdeaAnalysis(idea.id)
 
   return {
-    idea: updated as IdeaRecord,
-    messages: [userMsg, assistantMsg] as IdeaMessage[],
-    plans,
+    idea: idea as IdeaRecord,
+    messages: [userMsg as IdeaMessage],
+    plans: [] as IdeaPlanRow[],
   }
 }
 

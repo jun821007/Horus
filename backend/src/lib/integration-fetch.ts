@@ -1,11 +1,10 @@
-﻿export async function fetchIntegrationJson<T>(
+export async function fetchIntegrationJson<T>(
   baseUrl: string,
   path: string,
   secret: string,
   query?: Record<string, string | number>,
 ): Promise<T> {
-  const root = baseUrl.replace(/\/$/, '')
-  const url = new URL(path.startsWith('/') ? path.slice(1) : path, `${root}/`)
+  const url = new URL(path, baseUrl.replace(/\/$/, '') + '/')
   if (query) {
     for (const [k, v] of Object.entries(query)) url.searchParams.set(k, String(v))
   }

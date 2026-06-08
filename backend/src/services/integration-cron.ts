@@ -165,7 +165,7 @@ export async function getDashboardSummary() {
       .order('created_at', { ascending: false })
       .limit(30),
     sb.from('shipping_tracks').select('status').eq('status', '運輸中'),
-    sb.from('ideas').select('id').eq('status', 'pending'),
+    sb.from('ideas').select('id').in('status', ['pending', 'processing']),
   ])
 
   const reminders = remindersRes.data ?? []
@@ -178,3 +178,4 @@ export async function getDashboardSummary() {
     pending_ideas: ideasRes.data?.length ?? 0,
   }
 }
+
