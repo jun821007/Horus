@@ -1,5 +1,5 @@
 import { getSupabase } from '../lib/supabase.js'
-import { notifyShipAlert } from './reminders.js'
+import { runLycheeTomorrowReminderCron } from './integration-cron.js'
 
 function taipeiTomorrowYmd(): string {
   const fmt = new Intl.DateTimeFormat('en-CA', {
@@ -45,32 +45,6 @@ export async function createLycheeShipment(input: {
 }
 
 export async function runShipReminderCron(): Promise<{ tomorrow: string; alerted: number }> {
-  const tomorrow = taipeiTomorrowYmd()
-  const sb = getSupabase()
-
-  const { data: shipments, error } = await sb
-    .from('lychee_shipments')
-    .select('id')
-    .eq('target_ship_date', tomorrow)
-    .eq('status', 'scheduled')
-  if (error) throw error
-
-  if (!shipments?.length) {
-    return { tomorrow, alerted: 0 }
-  }
-
-  const { data: existing } = await sb
-    .from('reminders')
-    .select('id')
-    .eq('kind', 'ship_alert')
-    .eq('target_ship_date', tomorrow)
-    .gte('created_at', new Date(Date.now() - 20 * 3600 * 1000).toISOString())
-    .limit(1)
-
-  if (existing?.length) {
-    return { tomorrow, alerted: 0 }
-  }
-
-  await notifyShipAlert()
-  return { tomorrow, alerted: 1 }
+  const r = await runLycheeTomorrowReminderCron()
+  return { tomorrow: r.tomorrow, alerted: r.alerted }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api'
 import { supabase } from '../lib/supabase'
 
@@ -57,25 +57,23 @@ export function ProfitDashboard({ refreshKey, onMessage }: Props) {
   }
 
   return (
-    <section className="pixel-panel">
-      <h2>荷魯斯之眼 · 純毛利</h2>
-      <div className="stat-row">
-        <span>今日累計</span>
-        <span className="stat-value">${Math.round(summary.today).toLocaleString()}</span>
+    <div className="panel">
+      <div className="stat-grid">
+        <div className="stat-card" style={{ cursor: 'default' }}>
+          <div className="stat-label">今日累計</div>
+          <div className="stat-value gold">${Math.round(summary.today).toLocaleString()}</div>
+        </div>
+        <div className="stat-card" style={{ cursor: 'default' }}>
+          <div className="stat-label">歷史累計</div>
+          <div className="stat-value">${Math.round(summary.total).toLocaleString()}</div>
+        </div>
       </div>
-      <div className="stat-row">
-        <span>歷史累計</span>
-        <span className="stat-value">${Math.round(summary.total).toLocaleString()}</span>
-      </div>
-      <form className="inline-form" onSubmit={(e) => void checkout(e)}>
-        <input value={itemName} onChange={(e) => setItemName(e.target.value)} placeholder="品項（對應 inventories）" />
+      <form className="inline-form card" onSubmit={(e) => void checkout(e)}>
+        <input value={itemName} onChange={(e) => setItemName(e.target.value)} placeholder="品項" />
         <input value={saleAmount} onChange={(e) => setSaleAmount(e.target.value)} placeholder="銷售金額 TWD" inputMode="decimal" />
         <input value={qty} onChange={(e) => setQty(e.target.value)} placeholder="數量" inputMode="numeric" />
-        <button type="submit" className="btn btn-primary">POS 結帳記帳</button>
+        <button type="submit" className="btn btn-primary">POS 結帳</button>
       </form>
-      <p className="muted" style={{ marginTop: 10 }}>
-        即時監聽 daily_profits 更新（需設定 VITE_SUPABASE_*）
-      </p>
-    </section>
+    </div>
   )
 }

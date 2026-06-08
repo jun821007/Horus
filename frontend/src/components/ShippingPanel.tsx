@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { apiGet } from '../lib/api'
 
 type Track = {
@@ -17,22 +17,25 @@ export function ShippingPanel({ refreshKey }: { refreshKey: number }) {
   }, [refreshKey])
 
   return (
-    <section className="pixel-panel">
-      <h2>單號追蹤</h2>
-      <ul className="data-list">
-        {items.length === 0 ? (
-          <li className="muted">尚無追蹤單號</li>
-        ) : (
-          items.map((t) => (
-            <li key={t.tracking_number}>
-              <strong>{t.tracking_number}</strong>
-              <span className="badge">{t.carrier}</span>
-              <span className={t.status === '已到貨' ? 'badge arrived' : 'badge'}>{t.status}</span>
-              <div className="muted">{t.content_summary || '—'}</div>
-            </li>
-          ))
-        )}
-      </ul>
-    </section>
+    <div className="panel">
+      <h2 className="page-title">單號追蹤</h2>
+      <p className="page-desc">{items.length} 筆追蹤中</p>
+      {items.length === 0 ? (
+        <div className="empty-state">尚無追蹤單號<br />點右下角 ＋ 快速輸入</div>
+      ) : (
+        items.map((t) => (
+          <article key={t.tracking_number} className="card">
+            <div className="card-header">
+              <h3 className="card-title">{t.tracking_number}</h3>
+              <span className={t.status === '已到貨' ? 'chip success' : 'chip muted'}>{t.status}</span>
+            </div>
+            <p className="card-meta">
+              <span className="chip">{t.carrier}</span>
+            </p>
+            <p className="card-meta">{t.content_summary || '—'}</p>
+          </article>
+        ))
+      )}
+    </div>
   )
 }

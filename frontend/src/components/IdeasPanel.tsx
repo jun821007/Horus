@@ -1,16 +1,14 @@
-import { useCallback, useEffect, useState } from 'react'
+﻿import { useCallback, useEffect, useState } from 'react'
 import { apiGet } from '../lib/api'
 import type { IdeaCategory, IdeasSubTab } from '../types/ideas'
 import { IdeaCategorySettings } from './IdeaCategorySettings'
 import { IdeaChatView } from './IdeaChatView'
 import { IdeaPendingList } from './IdeaPendingList'
 
-const SUB_TABS: Array<{ id: IdeasSubTab; label: string; phase: string }> = [
-  { id: 'chat', label: '對話', phase: 'P0' },
-  { id: 'pending', label: '待決策', phase: 'P0' },
-  { id: 'categories', label: '分類', phase: 'P0' },
-  { id: 'map', label: '地圖', phase: 'P2' },
-  { id: 'goals', label: '目標', phase: 'P3' },
+const SUB_TABS: Array<{ id: IdeasSubTab; label: string }> = [
+  { id: 'chat', label: '對話' },
+  { id: 'pending', label: '待決策' },
+  { id: 'categories', label: '分類' },
 ]
 
 type Props = {
@@ -41,22 +39,26 @@ export function IdeasPanel({ onMessage }: Props) {
   }
 
   return (
-    <section className="ideas-panel pixel-panel">
-      <nav className="module-tabs ideas-sub-tabs">
+    <div className="ideas-panel panel">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <h2 className="page-title" style={{ flex: 1, margin: 0 }}>想法</h2>
+        {subTab === 'chat' ? (
+          <button type="button" className="btn btn-sm btn-primary" onClick={startNewChat}>＋ 新想法</button>
+        ) : null}
+      </div>
+
+      <div className="segmented">
         {SUB_TABS.map((t) => (
           <button
             key={t.id}
             type="button"
-            className={subTab === t.id ? 'tab active' : 'tab'}
+            className={subTab === t.id ? 'segmented-btn active' : 'segmented-btn'}
             onClick={() => setSubTab(t.id)}
           >
             {t.label}
           </button>
         ))}
-        {subTab === 'chat' ? (
-          <button type="button" className="btn mini ideas-new-btn" onClick={startNewChat}>＋ 新想法</button>
-        ) : null}
-      </nav>
+      </div>
 
       {subTab === 'chat' ? (
         <IdeaChatView
@@ -69,25 +71,10 @@ export function IdeasPanel({ onMessage }: Props) {
       ) : null}
 
       {subTab === 'pending' ? (
-        <IdeaPendingList
-          key={pendingBump}
-          categories={categories}
-          onOpen={openFromPending}
-        />
+        <IdeaPendingList key={pendingBump} categories={categories} onOpen={openFromPending} />
       ) : null}
 
-      {subTab === 'categories' ? (
-        <IdeaCategorySettings onMessage={onMessage} />
-      ) : null}
-
-      {subTab === 'map' || subTab === 'goals' ? (
-        <div className="ideas-coming-soon pixel-panel">
-          <h2>即將推出</h2>
-          <p className="muted">
-            {subTab === 'map' ? '敘事地圖（P2）' : '目標計劃與任務（P3）'} — 請先完成 P0 驗收後再開發。
-          </p>
-        </div>
-      ) : null}
-    </section>
+      {subTab === 'categories' ? <IdeaCategorySettings onMessage={onMessage} /> : null}
+    </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api'
 
 type Draft = {
@@ -45,34 +45,25 @@ export function InventoryDrafts({ refreshKey, onMessage, onConfirmed }: Props) {
   }
 
   return (
-    <section className="pixel-panel">
-      <h2>待確認入庫</h2>
+    <div className="panel">
       {items.length === 0 ? (
-        <p className="muted">無待確認草稿（實際庫存未變動）</p>
+        <div className="empty-state">無待確認草稿</div>
       ) : (
-        <ul className="data-list">
-          {items.map((d) => (
-            <li key={d.id}>
-              <div>
-                <strong>{d.item_name}</strong> × {d.quantity}
-              </div>
-              <div className="muted">
-                RMB {d.rmb_amount ?? '—'} / TWD {d.twd_amount} · 匯率 {Number(d.exchange_rate ?? 0).toFixed(2)} · 單件 {Number(d.unit_cost_twd).toFixed(2)} 元
-              </div>
-              <div className="row-actions" style={{ marginTop: 8 }}>
-                <button
-                  type="button"
-                  className="btn btn-gold"
-                  disabled={busyId === d.id}
-                  onClick={() => void confirm(d.id)}
-                >
-                  {busyId === d.id ? '處理中…' : '一鍵確認入庫'}
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+        items.map((d) => (
+          <article key={d.id} className="card">
+            <h3 className="card-title">{d.item_name} × {d.quantity}</h3>
+            <p className="card-meta">
+              RMB {d.rmb_amount ?? '—'} / TWD {d.twd_amount}<br />
+              匯率 {Number(d.exchange_rate ?? 0).toFixed(2)} · 單件 {Number(d.unit_cost_twd).toFixed(2)} 元
+            </p>
+            <div className="card-actions">
+              <button type="button" className="btn btn-primary" style={{ flex: 1 }} disabled={busyId === d.id} onClick={() => void confirm(d.id)}>
+                {busyId === d.id ? '處理中…' : '確認入庫'}
+              </button>
+            </div>
+          </article>
+        ))
       )}
-    </section>
+    </div>
   )
 }

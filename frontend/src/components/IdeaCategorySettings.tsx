@@ -91,7 +91,7 @@ export function IdeaCategorySettings({ onMessage }: Props) {
   }
 
   return (
-    <section className="pixel-panel ideas-categories">
+    <section className="panel ideas-categories">
       <h2>分類設定</h2>
       <div className="inline-form">
         <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="新分類名稱" />
@@ -101,22 +101,22 @@ export function IdeaCategorySettings({ onMessage }: Props) {
             <option key={c.id} value={c.id}>{'—'.repeat(c.depth)}{c.name}</option>
           ))}
         </select>
-        <button type="button" className="btn btn-gold" onClick={() => void addCategory()}>新增</button>
+        <button type="button" className="btn btn-primary" onClick={() => void addCategory()}>新增</button>
       </div>
       <ul className="ideas-cat-tree">
         {tree.map((cat) => (
           <li key={cat.id} style={{ paddingLeft: `${cat.depth * 16}px` }}>
             <span style={{ opacity: cat.is_active ? 1 : 0.45 }}>{cat.name}</span>
             <div className="row-actions">
-              <button type="button" className="btn mini" onClick={() => void move(cat, -1)}>↑</button>
-              <button type="button" className="btn mini" onClick={() => void move(cat, 1)}>↓</button>
+              <button type="button" className="btn btn-sm" onClick={() => void move(cat, -1)}>↑</button>
+              <button type="button" className="btn btn-sm" onClick={() => void move(cat, 1)}>↓</button>
               {cat.depth < 2 ? (
-                <button type="button" className="btn mini" onClick={() => addChild(cat.id)}>+ 子分類</button>
+                <button type="button" className="btn btn-sm" onClick={() => addChild(cat.id)}>+ 子分類</button>
               ) : null}
-              <button type="button" className="btn mini" onClick={() => void toggle(cat)}>
+              <button type="button" className="btn btn-sm" onClick={() => void toggle(cat)}>
                 {cat.is_active ? '停用' : '啟用'}
               </button>
-              <button type="button" className="btn mini" onClick={() => void remove(cat.id)}>刪除</button>
+              <button type="button" className="btn btn-sm" onClick={() => void remove(cat.id)}>刪除</button>
             </div>
           </li>
         ))}

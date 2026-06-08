@@ -1,11 +1,11 @@
-{
+﻿{
   "name": "Horus",
   "short_name": "Horus",
-  "description": "荷魯斯之眼 · 全域矩陣中控台",
+  "description": "?琿陌?臭???繚 ?典??拚銝剜??,
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a1208",
-  "theme_color": "#0a1208",
+  "background_color": "#0f1419",
+  "theme_color": "#0f1419",
   "icons": [
     {
       "src": "/icon.png",
@@ -15,3 +15,4 @@
     }
   ]
 }
+

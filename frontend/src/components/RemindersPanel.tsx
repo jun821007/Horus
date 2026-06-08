@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { apiGet, apiPatch } from '../lib/api'
 import { supabase } from '../lib/supabase'
 
@@ -35,26 +35,30 @@ export function RemindersPanel({ refreshKey }: { refreshKey: number }) {
     load()
   }
 
+  const unread = items.filter((r) => !r.is_read).length
+
   return (
-    <section className="pixel-panel">
-      <h2>提醒事項</h2>
-      <ul className="data-list">
-        {items.length === 0 ? (
-          <li className="muted">尚無提醒</li>
-        ) : (
-          items.map((r) => (
-            <li key={r.id} style={{ opacity: r.is_read ? 0.55 : 1 }}>
-              <strong>{r.title}</strong>
-              {!r.is_read ? (
-                <button type="button" className="btn" style={{ marginLeft: 8 }} onClick={() => void markRead(r.id)}>
-                  已讀
-                </button>
-              ) : null}
-              <div>{r.body}</div>
-            </li>
-          ))
-        )}
-      </ul>
-    </section>
+    <div className="panel">
+      <h2 className="page-title">提醒</h2>
+      <p className="page-desc">{unread} 則未讀</p>
+      {items.length === 0 ? (
+        <div className="empty-state">尚無提醒</div>
+      ) : (
+        items.map((r) => (
+          <article key={r.id} className="card" style={{ opacity: r.is_read ? 0.6 : 1 }}>
+            <div className="card-header">
+              <h3 className="card-title">{r.title}</h3>
+              {!r.is_read ? <span className="chip danger">未讀</span> : <span className="chip muted">已讀</span>}
+            </div>
+            <p className="card-meta">{r.body}</p>
+            {!r.is_read ? (
+              <div className="card-actions">
+                <button type="button" className="btn btn-sm btn-primary" onClick={() => void markRead(r.id)}>標記已讀</button>
+              </div>
+            ) : null}
+          </article>
+        ))
+      )}
+    </div>
   )
 }

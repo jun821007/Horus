@@ -1,8 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useState } from 'react'
 import { apiGet, apiPatch, apiPost } from '../lib/api'
-import { copyText, latestPlanPair, planCopyText, priorityClass } from '../lib/ideas'
+import { copyText, latestPlanPair, planCopyText } from '../lib/ideas'
 import type { IdeaCategory, IdeaMessage, IdeaPlan, IdeaRecord } from '../types/ideas'
 
+
+function priorityChipClass(priority: string | null | undefined): string {
+  if (priority === 'P0') return 'chip danger'
+  if (priority === 'P1') return 'chip'
+  return 'chip muted'
+}
 type Props = {
   ideaId: string | null
   categories: IdeaCategory[]
@@ -51,6 +57,7 @@ export function IdeaChatView({ ideaId, categories, onMessage, onIdeaCreated, onD
 
   const canDecide = idea && ['draft', 'pending'].includes(idea.status)
   const adoptedIndex = idea?.adopted_plan_index
+  const canCompose = !idea || ['draft', 'pending'].includes(idea.status)
 
   const submit = async () => {
     const text = draft.trim()
@@ -102,108 +109,86 @@ export function IdeaChatView({ ideaId, categories, onMessage, onIdeaCreated, onD
     }
   }
 
-  const leftMessages = messages.filter((m) => m.role === 'user' || m.role === 'system')
-
   return (
     <div className="ideas-chat-layout">
-      <div className="ideas-columns">
-        <div className="ideas-col ideas-col-left">
-          <h3>你</h3>
-          <div className="ideas-compose ideas-compose-left">
-            <textarea
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder="突然想到什麼？直接打…"
-              rows={3}
-              disabled={busy || (idea ? !['draft', 'pending'].includes(idea.status) : false)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) void submit()
-              }}
-            />
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={busy || !draft.trim()}
-              onClick={() => void submit()}
-            >
-              {busy ? '思考中…' : '送出'}
-            </button>
-          </div>
-          <div className="ideas-thread">
-            {leftMessages.map((m) => (
-              <article
-                key={m.id}
-                className={`ideas-bubble ideas-bubble-left ${m.role === 'system' ? 'decision' : ''}`}
-              >
-                {m.role === 'user' ? `我：${m.content}` : m.content}
-              </article>
-            ))}
-          </div>
-        </div>
-
-        <div className="ideas-col ideas-col-right">
-          <h3>AI</h3>
-          {busy ? (
-            <p className="muted ideas-thinking">思考中…</p>
-          ) : plan1 || plan2 ? (
-            <div className="pixel-panel ideas-ai-panel">
-              <p>
-                <span className="badge">{categoryName}</span>
-                <span className={priorityClass(latestMeta?.priority ?? idea?.priority)}>
-                  {latestMeta?.priority ?? idea?.priority ?? '—'}
-                </span>
-              </p>
-              {latestMeta?.priority_reason ? <p className="muted">{latestMeta.priority_reason}</p> : null}
-
-              {[plan1, plan2].map((plan, idx) => {
-                if (!plan) return null
-                const n = (idx + 1) as 1 | 2
-                const adopted = adoptedIndex === n
-                return (
-                  <div
-                    key={plan.id}
-                    className={`ideas-plan-card ${adopted ? 'adopted' : ''} ${adoptedIndex && !adopted ? 'faded' : ''}`}
-                  >
-                    <h4>方案{n === 1 ? '一' : '二'}：{plan.title}</h4>
-                    <p className="ideas-plan-label">問題點</p>
-                    <ul>{plan.problem_points.map((p) => <li key={p}>{p}</li>)}</ul>
-                    <p className="ideas-plan-label">行動建議</p>
-                    <ul>{plan.actions.map((a) => <li key={a}>{a}</li>)}</ul>
-                    <p className="muted">下一步：{plan.next_step || '—'}</p>
-                  </div>
-                )
-              })}
-
-              {canDecide ? (
-                <div className="ideas-decisions row-actions">
-                  <button type="button" className="btn btn-gold" disabled={busy} onClick={() => void decide('adopt_1')}>採用方案一</button>
-                  <button type="button" className="btn btn-gold" disabled={busy} onClick={() => void decide('adopt_2')}>採用方案二</button>
-                  <button type="button" className="btn" disabled={busy} onClick={() => void decide('pending')}>暫緩</button>
-                  <button type="button" className="btn" disabled={busy} onClick={() => void decide('archive')}>丟棄</button>
-                  <button
-                    type="button"
-                    className="btn"
-                    disabled={!plan1}
-                    onClick={() => void copyPlan(1, plan1)}
-                  >
-                    {copiedKey === `${plan1?.id}-1` ? '已複製' : '複製方案一'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn"
-                    disabled={!plan2}
-                    onClick={() => void copyPlan(2, plan2)}
-                  >
-                    {copiedKey === `${plan2?.id}-2` ? '已複製' : '複製方案二'}
-                  </button>
-                </div>
-              ) : null}
+      <div className="ideas-thread">
+        {messages.length === 0 && !busy ? (
+          <div className="empty-state">輸入想法，AI 會回兩個方案</div>
+        ) : null}
+        {messages.map((m) => {
+          if (m.role === 'system') {
+            return <div key={m.id} className="bubble system">{m.content}</div>
+          }
+          if (m.role === 'user') {
+            return <div key={m.id} className="bubble user">{m.content}</div>
+          }
+          return (
+            <div key={m.id} className="bubble assistant">
+              {m.content}
             </div>
-          ) : (
-            <p className="muted">輸入想法後，AI 會在這裡回覆</p>
-          )}
+          )
+        })}
+        {busy ? <div className="bubble assistant">思考中…</div> : null}
+      </div>
+
+      {(plan1 || plan2) && !busy ? (
+        <div className="panel" style={{ marginTop: 8 }}>
+          <div style={{ marginBottom: 8 }}>
+            <span className="chip">{categoryName}</span>
+            <span className={priorityChipClass(latestMeta?.priority ?? idea?.priority)}>
+              {latestMeta?.priority ?? idea?.priority ?? '—'}
+            </span>
+          </div>
+          {latestMeta?.priority_reason ? <p className="card-meta">{latestMeta.priority_reason}</p> : null}
+          {[plan1, plan2].map((plan, idx) => {
+            if (!plan) return null
+            const n = (idx + 1) as 1 | 2
+            const adopted = adoptedIndex === n
+            return (
+              <div key={plan.id} className={`ideas-plan-card ${adopted ? 'adopted' : ''} ${adoptedIndex && !adopted ? 'faded' : ''}`}>
+                <h4>方案{n === 1 ? '一' : '二'}：{plan.title}</h4>
+                <p className="ideas-plan-label">問題點</p>
+                <ul>{plan.problem_points.map((p) => <li key={p}>{p}</li>)}</ul>
+                <p className="ideas-plan-label">行動建議</p>
+                <ul>{plan.actions.map((a) => <li key={a}>{a}</li>)}</ul>
+                <p className="card-meta">下一步：{plan.next_step || '—'}</p>
+                <button type="button" className="btn btn-sm" disabled={!plan} onClick={() => void copyPlan(n, plan)}>
+                  {copiedKey === `${plan.id}-${n}` ? '已複製' : `複製方案${n === 1 ? '一' : '二'}`}
+                </button>
+              </div>
+            )
+          })}
+          {canDecide ? (
+            <div className="ideas-decision-bar">
+              <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => void decide('adopt_1')}>採用①</button>
+              <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => void decide('adopt_2')}>採用②</button>
+              <button type="button" className="btn btn-sm" disabled={busy} onClick={() => void decide('pending')}>暫緩</button>
+              <button type="button" className="btn btn-sm" disabled={busy} onClick={() => void decide('archive')}>丟棄</button>
+            </div>
+          ) : null}
         </div>
+      ) : null}
+
+      <div className="ideas-compose-bar">
+        <textarea
+          className="input-field"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="突然想到什麼？"
+          rows={2}
+          disabled={busy || !canCompose}
+        />
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={busy || !draft.trim() || !canCompose}
+          onClick={() => void submit()}
+        >
+          {busy ? '思考中…' : '送出'}
+        </button>
       </div>
     </div>
   )
 }
+
+

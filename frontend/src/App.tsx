@@ -1,69 +1,99 @@
-import { useState } from 'react'
-import { UniversalInput } from './components/UniversalInput'
-import { ShippingPanel } from './components/ShippingPanel'
+﻿import { useState } from 'react'
+import { BodyPanel } from './components/BodyPanel'
+import { BottomNav } from './components/BottomNav'
+import { HomeDashboard } from './components/HomeDashboard'
+import { IdeasPanel } from './components/IdeasPanel'
+import { InputSheet } from './components/InputSheet'
 import { InventoryDrafts } from './components/InventoryDrafts'
-import { RemindersPanel } from './components/RemindersPanel'
 import { LycheePanel } from './components/LycheePanel'
 import { ProfitDashboard } from './components/ProfitDashboard'
-import { IdeasPanel } from './components/IdeasPanel'
+import { RemindersPanel } from './components/RemindersPanel'
+import { ShippingPanel } from './components/ShippingPanel'
+import { Toast } from './components/Toast'
+import type { AppTab, SubPage } from './types/app'
 
-type Module = 'shipping' | 'inventory' | 'reminders' | 'lychee' | 'profit' | 'ideas'
+const SUB_TITLES: Record<NonNullable<SubPage>, string> = {
+  inventory: '庫存草稿',
+  lychee: '荔枝出貨',
+  profit: '毛利結帳',
+}
 
-const TABS: Array<{ id: Module; label: string }> = [
-  { id: 'shipping', label: '單號' },
-  { id: 'inventory', label: '庫存' },
-  { id: 'reminders', label: '提醒' },
-  { id: 'lychee', label: '荔枝' },
-  { id: 'profit', label: '毛利' },
-  { id: 'ideas', label: '想法' },
-]
+const TAB_TITLES: Record<AppTab, string> = {
+  home: 'Horus',
+  shipping: '單號',
+  reminders: '提醒',
+  ideas: '想法',
+  body: '身體',
+}
 
 export default function App() {
-  const [module, setModule] = useState<Module>('shipping')
+  const [tab, setTab] = useState<AppTab>('home')
+  const [subPage, setSubPage] = useState<SubPage>(null)
+  const [inputOpen, setInputOpen] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
-  const [flash, setFlash] = useState<{ text: string; err?: boolean } | null>(null)
+  const [toast, setToast] = useState<{ text: string; err?: boolean } | null>(null)
 
   const bump = () => setRefreshKey((k) => k + 1)
   const showMsg = (text: string, err?: boolean) => {
-    setFlash({ text, err })
-    window.setTimeout(() => setFlash(null), 4000)
+    setToast({ text, err })
+    window.setTimeout(() => setToast(null), 3500)
   }
 
+  const showFab = tab !== 'ideas'
+  const headerTitle = subPage ? SUB_TITLES[subPage] : TAB_TITLES[tab]
+
   return (
-    <div className={`app ${module === 'ideas' ? 'app--ideas' : ''}`}>
-      {flash ? <div className={flash.err ? 'flash err' : 'flash'}>{flash.text}</div> : null}
+    <div className="app-shell">
+      <header className="app-header">
+        {subPage ? (
+          <button type="button" className="header-back" onClick={() => setSubPage(null)} aria-label="返回">‹</button>
+        ) : (
+          <img src="/icon.png" alt="" width={32} height={32} />
+        )}
+        <div>
+          <h1>{headerTitle}</h1>
+        </div>
+      </header>
 
-      {module !== 'ideas' ? (
-        <UniversalInput
-          onResult={showMsg}
-          onSuccess={() => {
-            bump()
-            setModule('inventory')
-          }}
-        />
+      <main className={showFab ? 'app-main' : 'app-main app-main--no-fab'}>
+        {subPage === 'inventory' ? (
+          <InventoryDrafts refreshKey={refreshKey} onMessage={showMsg} onConfirmed={bump} />
+        ) : null}
+        {subPage === 'lychee' ? <LycheePanel refreshKey={refreshKey} onMessage={showMsg} /> : null}
+        {subPage === 'profit' ? <ProfitDashboard refreshKey={refreshKey} onMessage={showMsg} /> : null}
+
+        {!subPage && tab === 'home' ? (
+          <HomeDashboard refreshKey={refreshKey} onNavigateTab={setTab} onOpenSub={setSubPage} />
+        ) : null}
+        {!subPage && tab === 'shipping' ? <ShippingPanel refreshKey={refreshKey} /> : null}
+        {!subPage && tab === 'reminders' ? <RemindersPanel refreshKey={refreshKey} /> : null}
+        {!subPage && tab === 'ideas' ? <IdeasPanel onMessage={showMsg} /> : null}
+        {!subPage && tab === 'body' ? <BodyPanel onMessage={showMsg} /> : null}
+      </main>
+
+      {showFab ? (
+        <button type="button" className="fab" onClick={() => setInputOpen(true)} aria-label="快速輸入">+</button>
       ) : null}
 
-      <nav className="module-tabs">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            className={module === t.id ? 'tab active' : 'tab'}
-            onClick={() => setModule(t.id)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </nav>
+      <InputSheet
+        open={inputOpen}
+        onClose={() => setInputOpen(false)}
+        onResult={showMsg}
+        onSuccess={() => {
+          bump()
+          if (tab === 'home') setSubPage('inventory')
+        }}
+      />
 
-      {module === 'shipping' ? <ShippingPanel refreshKey={refreshKey} /> : null}
-      {module === 'inventory' ? (
-        <InventoryDrafts refreshKey={refreshKey} onMessage={showMsg} onConfirmed={bump} />
-      ) : null}
-      {module === 'reminders' ? <RemindersPanel refreshKey={refreshKey} /> : null}
-      {module === 'lychee' ? <LycheePanel refreshKey={refreshKey} onMessage={showMsg} /> : null}
-      {module === 'profit' ? <ProfitDashboard refreshKey={refreshKey} onMessage={showMsg} /> : null}
-      {module === 'ideas' ? <IdeasPanel onMessage={showMsg} /> : null}
+      <BottomNav
+        active={subPage ? 'home' : tab}
+        onChange={(t) => {
+          setSubPage(null)
+          setTab(t)
+        }}
+      />
+
+      <Toast message={toast?.text ?? null} err={toast?.err} />
     </div>
   )
 }

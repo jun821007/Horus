@@ -1,0 +1,204 @@
+﻿import { config } from '../config.js'
+import { fetchIntegrationJson } from '../lib/integration-fetch.js'
+import { taipeiDayStartIso, taipeiTomorrowYmd, taipeiYmd } from '../lib/taipei-date.js'
+import { getSupabase } from '../lib/supabase.js'
+
+export type ReminderKind = 'general' | 'arrival' | 'ship_alert' | 'system' | 'hot_seller'
+
+type ZhTomorrowResponse = {
+  ship_date: string
+  count: number
+  orders: Array<{ customer_name: string }>
+}
+
+type HotSellersResponse = {
+  period_days: number
+  items: Array<{ category: string; item_name: string; outbound_qty: number; rank: number }>
+}
+
+async function hasReminderToday(kind: ReminderKind, extra?: { target_ship_date?: string }): Promise<boolean> {
+  const sb = getSupabase()
+  const today = taipeiYmd()
+  let q = sb
+    .from('reminders')
+    .select('id')
+    .eq('kind', kind)
+    .gte('created_at', taipeiDayStartIso(today))
+    .limit(1)
+  if (extra?.target_ship_date) q = q.eq('target_ship_date', extra.target_ship_date)
+  const { data } = await q
+  return (data?.length ?? 0) > 0
+}
+
+async function insertReminder(input: {
+  title: string
+  body: string
+  kind: ReminderKind
+  target_ship_date?: string
+  metadata?: Record<string, unknown>
+}): Promise<void> {
+  const sb = getSupabase()
+  const { error } = await sb.from('reminders').insert({
+    title: input.title,
+    body: input.body,
+    kind: input.kind,
+    is_read: false,
+    is_pushed: true,
+    target_ship_date: input.target_ship_date ?? null,
+    metadata: input.metadata ?? null,
+  })
+  if (error) throw error
+}
+
+function formatCustomerList(names: string[], max = 5): string {
+  if (names.length === 0) return ''
+  const shown = names.slice(0, max)
+  const rest = names.length - shown.length
+  const line = shown.join('、')
+  return rest > 0 ? `${line} 等 ${names.length} 筆` : line
+}
+
+function formatHotTop3(items: HotSellersResponse['items']): string {
+  const top = items.slice(0, 3)
+  if (top.length === 0) return '本週尚無出庫紀錄'
+  return top
+    .map((i) => `${i.category.replace(/^[^\w\u4e00-\u9fff]+/, '').trim()} ${i.item_name}(${i.outbound_qty})`)
+    .join('、')
+}
+
+export async function fetchZhTomorrowShipments(): Promise<ZhTomorrowResponse | null> {
+  if (!config.zhApiBaseUrl || !config.zhHorusReadSecret) return null
+  return fetchIntegrationJson<ZhTomorrowResponse>(
+    config.zhApiBaseUrl,
+    '/api/horus/tomorrow-shipments',
+    config.zhHorusReadSecret,
+  )
+}
+
+export async function fetchInStockHotSellers(days = 7, limit = 10): Promise<HotSellersResponse | null> {
+  if (!config.instockApiBaseUrl || !config.instockHorusReadSecret) return null
+  return fetchIntegrationJson<HotSellersResponse>(
+    config.instockApiBaseUrl,
+    '/api/horus/hot-sellers',
+    config.instockHorusReadSecret,
+    { days, limit },
+  )
+}
+
+export async function runLycheeTomorrowReminderCron(): Promise<{
+  source: 'zh' | 'local' | 'skipped'
+  tomorrow: string
+  count: number
+  alerted: number
+}> {
+  const tomorrow = taipeiTomorrowYmd()
+
+  if (config.zhApiBaseUrl && config.zhHorusReadSecret) {
+    const data = await fetchZhTomorrowShipments()
+    const count = data?.count ?? 0
+    if (count === 0) return { source: 'zh', tomorrow, count: 0, alerted: 0 }
+
+    if (await hasReminderToday('ship_alert', { target_ship_date: tomorrow })) {
+      return { source: 'zh', tomorrow, count, alerted: 0 }
+    }
+
+    const names = (data?.orders ?? []).map((o) => o.customer_name).filter(Boolean)
+    await insertReminder({
+      title: `【荔枝】明天有 ${count} 筆出貨`,
+      body: formatCustomerList(names),
+      kind: 'ship_alert',
+      target_ship_date: tomorrow,
+      metadata: { source: 'zh', deep_link: config.zhAppUrl || config.zhApiBaseUrl },
+    })
+    return { source: 'zh', tomorrow, count, alerted: 1 }
+  }
+
+  const sb = getSupabase()
+  const { data: shipments, error } = await sb
+    .from('lychee_shipments')
+    .select('order_label')
+    .eq('target_ship_date', tomorrow)
+    .eq('status', 'scheduled')
+  if (error) throw error
+  const count = shipments?.length ?? 0
+  if (count === 0) return { source: 'local', tomorrow, count: 0, alerted: 0 }
+
+  if (await hasReminderToday('ship_alert', { target_ship_date: tomorrow })) {
+    return { source: 'local', tomorrow, count, alerted: 0 }
+  }
+
+  const names = (shipments ?? []).map((s) => s.order_label as string)
+  await insertReminder({
+    title: `【荔枝】明天有 ${count} 筆出貨`,
+    body: formatCustomerList(names),
+    kind: 'ship_alert',
+    target_ship_date: tomorrow,
+    metadata: { source: 'local' },
+  })
+  return { source: 'local', tomorrow, count, alerted: 1 }
+}
+
+export async function runHotSellerReminderCron(): Promise<{ alerted: number; top_count: number }> {
+  const data = await fetchInStockHotSellers(7, 10)
+  if (!data || data.items.length === 0) return { alerted: 0, top_count: 0 }
+
+  if (await hasReminderToday('hot_seller')) {
+    return { alerted: 0, top_count: data.items.length }
+  }
+
+  await insertReminder({
+    title: '【熱銷】本週出庫 Top3',
+    body: formatHotTop3(data.items),
+    kind: 'hot_seller',
+    metadata: { source: 'instock', deep_link: config.instockAppUrl || config.instockApiBaseUrl, period_days: 7 },
+  })
+  return { alerted: 1, top_count: data.items.length }
+}
+
+export async function getDashboardSummary() {
+  const tomorrow = taipeiTomorrowYmd()
+  const sb = getSupabase()
+
+  const [zh, hot, remindersRes, tracksRes] = await Promise.all([
+    fetchZhTomorrowShipments().catch(() => null),
+    fetchInStockHotSellers(7, 3).catch(() => null),
+    sb.from('reminders').select('id, kind, is_read').order('created_at', { ascending: false }).limit(200),
+    sb.from('shipping_tracks').select('status').eq('status', '運輸中'),
+  ])
+
+  let lycheeCount = 0
+  let lycheePreview: string[] = []
+  if (zh) {
+    lycheeCount = zh.count
+    lycheePreview = zh.orders.slice(0, 3).map((o) => o.customer_name)
+  } else {
+    const { data } = await sb
+      .from('lychee_shipments')
+      .select('order_label')
+      .eq('target_ship_date', tomorrow)
+      .eq('status', 'scheduled')
+    lycheeCount = data?.length ?? 0
+    lycheePreview = (data ?? []).slice(0, 3).map((r) => r.order_label as string)
+  }
+
+  const reminders = remindersRes.data ?? []
+  const unreadTotal = reminders.filter((r) => !r.is_read).length
+  const unreadArrivals = reminders.filter((r) => !r.is_read && r.kind === 'arrival').length
+
+  return {
+    lychee_tomorrow: {
+      count: lycheeCount,
+      ship_date: tomorrow,
+      preview: lycheePreview,
+      deep_link: config.zhAppUrl || config.zhApiBaseUrl || null,
+    },
+    hot_sellers: {
+      period_days: hot?.period_days ?? 7,
+      items: hot?.items ?? [],
+      deep_link: config.instockAppUrl || config.instockApiBaseUrl || null,
+    },
+    shipping_in_transit: tracksRes.data?.length ?? 0,
+    unread_arrivals: unreadArrivals,
+    unread_total: unreadTotal,
+  }
+}

@@ -1,11 +1,16 @@
-import { useCallback, useEffect, useState } from 'react'
+﻿import { useCallback, useEffect, useState } from 'react'
 import { apiGet } from '../lib/api'
-import { priorityClass } from '../lib/ideas'
 import type { IdeaCategory, IdeaRecord } from '../types/ideas'
 
 type Props = {
   categories: IdeaCategory[]
   onOpen: (ideaId: string) => void
+}
+
+function priorityChip(priority: string | null): string {
+  if (priority === 'P0') return 'chip danger'
+  if (priority === 'P1') return 'chip'
+  return 'chip muted'
 }
 
 export function IdeaPendingList({ categories, onOpen }: Props) {
@@ -34,25 +39,20 @@ export function IdeaPendingList({ categories, onOpen }: Props) {
   }
 
   return (
-    <section className="pixel-panel ideas-pending">
-      <h2>待決策 ({items.length})</h2>
+    <div className="panel">
       {items.length === 0 ? (
-        <p className="muted">沒有待決策想法，去對話 Tab 輸入吧</p>
+        <div className="empty-state">沒有待決策想法</div>
       ) : (
-        <ul className="ideas-pending-list">
-          {items.map((idea) => (
-            <li key={idea.id}>
-              <button type="button" className="ideas-pending-row" onClick={() => onOpen(idea.id)}>
-                <span className={priorityClass(idea.priority)}>{idea.priority ?? '—'}</span>
-                <span className="ideas-pending-cat">{catName(idea.category_id)}</span>
-                <span className="ideas-pending-title">{idea.title}</span>
-                <span className="muted ideas-pending-date">{fmtDate(idea.updated_at)}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        items.map((idea) => (
+          <button key={idea.id} type="button" className="card" style={{ width: '100%', textAlign: 'left' }} onClick={() => onOpen(idea.id)}>
+            <div className="card-header">
+              <h3 className="card-title">{idea.title}</h3>
+              <span className={priorityChip(idea.priority)}>{idea.priority ?? '—'}</span>
+            </div>
+            <p className="card-meta">{catName(idea.category_id)} · {fmtDate(idea.updated_at)}</p>
+          </button>
+        ))
       )}
-      <p className="muted ideas-pending-hint">P1 將支援拖曳排序 · AI 建議僅供參考</p>
-    </section>
+    </div>
   )
 }

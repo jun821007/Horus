@@ -1,4 +1,4 @@
-import dotenv from 'dotenv'
+﻿import dotenv from 'dotenv'
 
 dotenv.config()
 
@@ -20,6 +20,12 @@ export const config = {
   supabaseUrl: trim('SUPABASE_URL'),
   supabaseServiceKey: trim('SUPABASE_SERVICE_ROLE_KEY'),
   appTimeZone: trim('APP_TIMEZONE') || 'Asia/Taipei',
+  zhApiBaseUrl: trim('ZH_API_BASE_URL'),
+  zhHorusReadSecret: trim('ZH_HORUS_READ_SECRET'),
+  zhAppUrl: trim('ZH_APP_URL'),
+  instockApiBaseUrl: trim('INSTOCK_API_BASE_URL'),
+  instockHorusReadSecret: trim('INSTOCK_HORUS_READ_SECRET'),
+  instockAppUrl: trim('INSTOCK_APP_URL'),
 }
 
 export function validateSupabaseUrl(url: string): string | null {

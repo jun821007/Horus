@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { apiGet, apiPost } from '../lib/api'
 
 type Shipment = {
@@ -48,23 +48,22 @@ export function LycheePanel({ refreshKey, onMessage }: Props) {
   }
 
   return (
-    <section className="pixel-panel">
-      <h2>荔枝出貨單</h2>
-      <form className="inline-form" onSubmit={(e) => void submit(e)}>
+    <div className="panel">
+      <form className="inline-form card" onSubmit={(e) => void submit(e)}>
         <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="出貨單名稱" />
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         <input value={summary} onChange={(e) => setSummary(e.target.value)} placeholder="品項摘要（選填）" />
         <button type="submit" className="btn btn-primary">新增排程</button>
       </form>
-      <ul className="data-list" style={{ marginTop: 12 }}>
-        {items.map((s) => (
-          <li key={s.id}>
-            <strong>{s.order_label}</strong>
-            <span className="badge">{s.target_ship_date}</span>
-            <div className="muted">{s.items_summary || s.status}</div>
-          </li>
-        ))}
-      </ul>
-    </section>
+      {items.map((s) => (
+        <article key={s.id} className="card">
+          <div className="card-header">
+            <h3 className="card-title">{s.order_label}</h3>
+            <span className="chip">{s.target_ship_date}</span>
+          </div>
+          <p className="card-meta">{s.items_summary || s.status}</p>
+        </article>
+      ))}
+    </div>
   )
 }

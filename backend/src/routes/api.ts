@@ -8,6 +8,7 @@ import { recordPosSale, getProfitSummary } from '../services/pos.js'
 import { getSupabase } from '../lib/supabase.js'
 import { checkSupabaseConnection } from '../lib/supabase-check.js'
 import { ideasRouter } from './ideas.js'
+import { getDashboardSummary } from '../services/integration-cron.js'
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } })
 
@@ -18,6 +19,15 @@ apiRouter.use('/ideas', ideasRouter)
 
 apiRouter.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'horus-backend' })
+})
+
+apiRouter.get('/dashboard/summary', async (_req, res) => {
+  try {
+    const summary = await getDashboardSummary()
+    res.json({ ok: true, ...summary })
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e) })
+  }
 })
 
 /** 診斷 Supabase 連線（不洩漏 key） */
