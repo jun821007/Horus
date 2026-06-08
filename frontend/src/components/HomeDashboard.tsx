@@ -18,6 +18,12 @@ type DashboardSummary = {
   unread_total: number
   shipping_in_transit: number
   pending_ideas: number
+  profit_month_total: number
+  profit_daily_average: number
+  profit_pos: number
+  profit_custom: number
+  profit_period_start: string | null
+  profit_period_end: string | null
 }
 
 type Props = {
@@ -40,6 +46,10 @@ function kindChipClass(kind: string): string {
   return 'chip muted'
 }
 
+function money(n: number) {
+  return `$${Math.round(n).toLocaleString()}`
+}
+
 export function HomeDashboard({ refreshKey, onNavigateTab, onOpenSub }: Props) {
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
 
@@ -51,6 +61,9 @@ export function HomeDashboard({ refreshKey, onNavigateTab, onOpenSub }: Props) {
   useEffect(() => { void load() }, [load, refreshKey])
 
   const upcoming = summary?.upcoming_reminders ?? []
+  const periodHint = summary?.profit_period_start && summary?.profit_period_end
+    ? `${summary.profit_period_start} ~ ${summary.profit_period_end}`
+    : '本月'
 
   return (
     <div className="panel">
@@ -94,9 +107,9 @@ export function HomeDashboard({ refreshKey, onNavigateTab, onOpenSub }: Props) {
           <div className="stat-hint">想法</div>
         </button>
         <button type="button" className="stat-card" onClick={() => onOpenSub('profit')}>
-          <div className="stat-label">毛利</div>
-          <div className="stat-value gold">POS</div>
-          <div className="stat-hint">快速記帳</div>
+          <div className="stat-label">本月毛利</div>
+          <div className="stat-value gold">{money(summary?.profit_month_total ?? 0)}</div>
+          <div className="stat-hint">日均 {money(summary?.profit_daily_average ?? 0)} · {periodHint}</div>
         </button>
       </div>
     </div>

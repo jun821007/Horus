@@ -29,6 +29,7 @@ export const config = {
   orderToolApiBaseUrl: trim('ORDER_TOOL_API_BASE_URL'),
   orderToolHorusReadSecret: trim('ORDER_TOOL_HORUS_READ_SECRET'),
   orderToolAppUrl: trim('ORDER_TOOL_APP_URL'),
+  posApiBaseUrl: trim('POS_API_BASE_URL'),
 }
 
 export function validateSupabaseUrl(url: string): string | null {
@@ -53,3 +54,4 @@ export function assertBackendConfig(): void {
     console.warn('[horus] GEMINI_API_KEY not set — AI ingest will fail')
   }
 }
+

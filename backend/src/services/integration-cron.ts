@@ -158,7 +158,11 @@ export async function runHotSellerReminderCron(): Promise<{ alerted: number; top
 export async function getDashboardSummary() {
   const sb = getSupabase()
 
-  const [remindersRes, tracksRes, ideasRes] = await Promise.all([
+  const profitPromise = import('./profit.js')
+    .then((m) => m.getMonthProfitSummary())
+    .catch(() => null)
+
+  const [remindersRes, tracksRes, ideasRes, profit] = await Promise.all([
     sb
       .from('reminders')
       .select('id, title, body, kind, is_read, created_at, metadata')
@@ -166,6 +170,7 @@ export async function getDashboardSummary() {
       .limit(30),
     sb.from('shipping_tracks').select('status').eq('status', '運輸中'),
     sb.from('ideas').select('id').in('status', ['pending', 'processing']),
+    profitPromise,
   ])
 
   const reminders = remindersRes.data ?? []
@@ -176,6 +181,12 @@ export async function getDashboardSummary() {
     unread_total: reminders.filter((r) => !r.is_read).length,
     shipping_in_transit: tracksRes.data?.length ?? 0,
     pending_ideas: ideasRes.data?.length ?? 0,
+    profit_month_total: profit?.month_total ?? 0,
+    profit_daily_average: profit?.daily_average ?? 0,
+    profit_pos: profit?.pos_profit ?? 0,
+    profit_custom: profit?.custom_profit ?? 0,
+    profit_period_start: profit?.period_start ?? null,
+    profit_period_end: profit?.period_end ?? null,
   }
 }
 

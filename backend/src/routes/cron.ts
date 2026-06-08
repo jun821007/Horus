@@ -1,6 +1,6 @@
-﻿import { Router } from 'express'
+import { Router } from 'express'
 import { requireCronSecret } from '../middleware/cronAuth.js'
-import { runDailyTrackingCron } from '../services/shipping.js'
+import { runCleanupDeliveredTracks, runDailyTrackingCron } from '../services/shipping.js'
 import { runShipReminderCron } from '../services/lychee.js'
 import { runHotSellerReminderCron, runLycheeTomorrowReminderCron } from '../services/integration-cron.js'
 import { runOrderToolSyncCron } from '../services/order-tool-sync.js'
@@ -58,9 +58,10 @@ cronRouter.post('/daily', async (_req, res) => {
   try {
     const orderTool = await runOrderToolSyncCron(7)
     const tracking = await runDailyTrackingCron()
+    const cleanup = await runCleanupDeliveredTracks()
     const lychee = await runLycheeTomorrowReminderCron()
     const hot = await runHotSellerReminderCron()
-    res.json({ ok: true, orderTool, tracking, lychee, hot })
+    res.json({ ok: true, orderTool, tracking, cleanup, lychee, hot })
   } catch (e) {
     res.status(500).json({ ok: false, error: String(e) })
   }

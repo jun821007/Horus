@@ -4,7 +4,14 @@ import { z } from 'zod'
 import { dispatchIngest } from '../services/dispatch.js'
 import { confirmDraft } from '../services/inventory.js'
 import { createLycheeShipment } from '../services/lychee.js'
-import { recordPosSale, getProfitSummary } from '../services/pos.js'
+import {
+  addProfitAdjustment,
+  createProfitCategory,
+  deleteProfitAdjustment,
+  deleteProfitCategory,
+  getMonthProfitSummary,
+  listProfitCategories,
+} from '../services/profit.js'
 import { getSupabase } from '../lib/supabase.js'
 import { checkSupabaseConnection } from '../lib/supabase-check.js'
 import { ideasRouter } from './ideas.js'
@@ -132,29 +139,70 @@ apiRouter.post('/lychee-shipments', async (req, res) => {
   }
 })
 
-const posSchema = z.object({
-  item_name: z.string().min(1),
-  quantity: z.number().int().positive().optional(),
-  sale_amount: z.number().nonnegative(),
-  order_ref: z.string().optional(),
-})
-
-apiRouter.post('/pos/checkout', async (req, res) => {
-  const parsed = posSchema.safeParse(req.body)
-  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
+apiRouter.get('/profits/summary', async (_req, res) => {
   try {
-    const result = await recordPosSale(parsed.data)
-    res.status(201).json({ ok: true, ...result })
+    const summary = await getMonthProfitSummary()
+    res.json({ ok: true, ...summary })
   } catch (e) {
-    res.status(400).json({ error: String(e) })
+    res.status(500).json({ ok: false, error: formatError(e) })
   }
 })
 
-apiRouter.get('/profits/summary', async (_req, res) => {
+apiRouter.get('/profits/categories', async (_req, res) => {
   try {
-    const summary = await getProfitSummary()
-    res.json(summary)
+    const items = await listProfitCategories(true)
+    res.json({ ok: true, items })
   } catch (e) {
-    res.status(500).json({ error: String(e) })
+    res.status(500).json({ ok: false, error: formatError(e) })
+  }
+})
+
+const categorySchema = z.object({ name: z.string().min(1) })
+
+apiRouter.post('/profits/categories', async (req, res) => {
+  const parsed = categorySchema.safeParse(req.body)
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
+  try {
+    const row = await createProfitCategory(parsed.data.name)
+    res.status(201).json({ ok: true, category: row })
+  } catch (e) {
+    res.status(400).json({ ok: false, error: formatError(e) })
+  }
+})
+
+apiRouter.delete('/profits/categories/:id', async (req, res) => {
+  try {
+    await deleteProfitCategory(req.params.id)
+    res.json({ ok: true })
+  } catch (e) {
+    res.status(400).json({ ok: false, error: formatError(e) })
+  }
+})
+
+const adjustmentSchema = z.object({
+  category_id: z.string().uuid().optional().nullable(),
+  item_name: z.string().min(1),
+  net_profit: z.number(),
+  profit_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  note: z.string().optional(),
+})
+
+apiRouter.post('/profits/adjustments', async (req, res) => {
+  const parsed = adjustmentSchema.safeParse(req.body)
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() })
+  try {
+    const row = await addProfitAdjustment(parsed.data)
+    res.status(201).json({ ok: true, adjustment: row })
+  } catch (e) {
+    res.status(400).json({ ok: false, error: formatError(e) })
+  }
+})
+
+apiRouter.delete('/profits/adjustments/:id', async (req, res) => {
+  try {
+    await deleteProfitAdjustment(req.params.id)
+    res.json({ ok: true })
+  } catch (e) {
+    res.status(400).json({ ok: false, error: formatError(e) })
   }
 })

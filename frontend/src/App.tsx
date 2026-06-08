@@ -15,7 +15,7 @@ import type { AppTab, SubPage } from './types/app'
 const SUB_TITLES: Record<NonNullable<SubPage>, string> = {
   inventory: '庫存草稿',
   lychee: '荔枝出貨',
-  profit: '毛利結帳',
+  profit: '毛利',
 }
 
 const TAB_TITLES: Record<AppTab, string> = {
