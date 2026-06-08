@@ -156,49 +156,25 @@ export async function runHotSellerReminderCron(): Promise<{ alerted: number; top
 }
 
 export async function getDashboardSummary() {
-  const tomorrow = taipeiTomorrowYmd()
   const sb = getSupabase()
 
-  const [zh, hot, remindersRes, tracksRes] = await Promise.all([
-    fetchZhTomorrowShipments().catch(() => null),
-    fetchInStockHotSellers(7, 3).catch(() => null),
-    sb.from('reminders').select('id, kind, is_read').order('created_at', { ascending: false }).limit(200),
+  const [remindersRes, tracksRes, ideasRes] = await Promise.all([
+    sb
+      .from('reminders')
+      .select('id, title, body, kind, is_read, created_at, metadata')
+      .order('created_at', { ascending: false })
+      .limit(30),
     sb.from('shipping_tracks').select('status').eq('status', '運輸中'),
+    sb.from('ideas').select('id').eq('status', 'pending'),
   ])
 
-  let lycheeCount = 0
-  let lycheePreview: string[] = []
-  if (zh) {
-    lycheeCount = zh.count
-    lycheePreview = zh.orders.slice(0, 3).map((o) => o.customer_name)
-  } else {
-    const { data } = await sb
-      .from('lychee_shipments')
-      .select('order_label')
-      .eq('target_ship_date', tomorrow)
-      .eq('status', 'scheduled')
-    lycheeCount = data?.length ?? 0
-    lycheePreview = (data ?? []).slice(0, 3).map((r) => r.order_label as string)
-  }
-
   const reminders = remindersRes.data ?? []
-  const unreadTotal = reminders.filter((r) => !r.is_read).length
-  const unreadArrivals = reminders.filter((r) => !r.is_read && r.kind === 'arrival').length
+  const upcoming = reminders.filter((r) => !r.is_read).slice(0, 8)
 
   return {
-    lychee_tomorrow: {
-      count: lycheeCount,
-      ship_date: tomorrow,
-      preview: lycheePreview,
-      deep_link: config.zhAppUrl || config.zhApiBaseUrl || null,
-    },
-    hot_sellers: {
-      period_days: hot?.period_days ?? 7,
-      items: hot?.items ?? [],
-      deep_link: config.instockAppUrl || config.instockApiBaseUrl || null,
-    },
+    upcoming_reminders: upcoming,
+    unread_total: reminders.filter((r) => !r.is_read).length,
     shipping_in_transit: tracksRes.data?.length ?? 0,
-    unread_arrivals: unreadArrivals,
-    unread_total: unreadTotal,
+    pending_ideas: ideasRes.data?.length ?? 0,
   }
 }

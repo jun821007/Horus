@@ -135,8 +135,21 @@ export async function analyzeIdeaText(
     userText,
   ].join('\n')
 
-  const result = await model.generateContent(prompt)
-  const parsed = parseJsonBlock(result.response.text().trim()) as Partial<IdeaAnalysisParsed>
+  let text: string
+  try {
+    const result = await model.generateContent(prompt)
+    text = result.response.text().trim()
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    if (/not found|404|invalid model/i.test(msg)) {
+      throw new Error(
+        `Gemini 模型不可用 (${config.geminiFlashModel})，請將 GEMINI_FLASH_MODEL 改為 gemini-3.5-flash 或 gemini-2.5-flash`,
+      )
+    }
+    throw new Error(`Gemini 呼叫失敗: ${msg}`)
+  }
+
+  const parsed = parseJsonBlock(text) as Partial<IdeaAnalysisParsed>
 
   const priority = parsed.priority === 'P0' || parsed.priority === 'P1' || parsed.priority === 'P2'
     ? parsed.priority
