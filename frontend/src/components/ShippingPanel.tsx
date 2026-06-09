@@ -6,6 +6,7 @@ type Track = {
   carrier: string
   content_summary: string
   status: string
+  status_text: string | null
   last_check_date: string | null
 }
 
@@ -31,6 +32,7 @@ export function ShippingPanel({ refreshKey }: { refreshKey: number }) {
             </div>
             <p className="card-meta">
               <span className="chip">{t.carrier}</span>
+              {t.status_text ? <span style={{ marginLeft: 8 }}>{t.status_text}</span> : null}
             </p>
             <p className="card-meta">{t.content_summary || '—'}</p>
           </article>

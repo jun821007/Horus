@@ -10,13 +10,17 @@ async function markArrived(
   trackingNumber: string,
   carrier: Carrier,
   contentSummary: string,
-  wasDelivered: boolean,
+  statusText: string,
 ): Promise<boolean> {
-  if (!wasDelivered) return false
   const now = new Date().toISOString()
   await sb
     .from('shipping_tracks')
-    .update({ status: '已到貨', last_check_date: now, arrived_at: now })
+    .update({
+      status: '已到貨',
+      last_check_date: now,
+      arrived_at: now,
+      status_text: statusText,
+    })
     .eq('tracking_number', trackingNumber)
   await notifyArrival(carrier, trackingNumber, contentSummary)
   return true
@@ -42,10 +46,12 @@ export async function syncShippingTrackFromOrderTool(input: {
 
   let status = existing?.status === '已到貨' ? '已到貨' : '運輸中'
   let arrived = false
+  let statusText: string | null = null
   const contentSummary = input.content_summary || existing?.content_summary || ''
 
   if (status !== '已到貨') {
     const result = await queryCarrierStatus(carrier, tn)
+    statusText = result.statusText
     if (result.delivered) {
       status = '已到貨'
       arrived = true
@@ -60,6 +66,7 @@ export async function syncShippingTrackFromOrderTool(input: {
     last_check_date: new Date().toISOString(),
     raw_input: input.source_meta ? JSON.stringify(input.source_meta) : null,
   }
+  if (statusText) row.status_text = statusText
   if (arrived) row.arrived_at = new Date().toISOString()
 
   const { error } = await sb.from('shipping_tracks').upsert(row, { onConflict: 'tracking_number' })
@@ -72,25 +79,35 @@ export async function syncShippingTrackFromOrderTool(input: {
   return { tracking_number: tn, carrier, arrived }
 }
 
-export async function runDailyTrackingCron(): Promise<{ checked: number; arrived: number }> {
+export async function runDailyTrackingCron(): Promise<{ checked: number; arrived: number; failed: number }> {
   const sb = getSupabase()
   const { data: rows, error } = await sb.from('shipping_tracks').select('*').eq('status', '運輸中')
   if (error) throw error
 
   let arrived = 0
+  let failed = 0
   for (const row of rows ?? []) {
     const result = await queryCarrierStatus(row.carrier, row.tracking_number)
+    const now = new Date().toISOString()
     await sb
       .from('shipping_tracks')
-      .update({ last_check_date: new Date().toISOString() })
+      .update({ last_check_date: now, status_text: result.statusText })
       .eq('tracking_number', row.tracking_number)
 
+    if (/查詢失敗|驗證碼|OCR/.test(result.statusText)) failed += 1
+
     if (!result.delivered) continue
-    const did = await markArrived(sb, row.tracking_number, row.carrier as Carrier, row.content_summary, true)
+    const did = await markArrived(
+      sb,
+      row.tracking_number,
+      row.carrier as Carrier,
+      row.content_summary,
+      result.statusText,
+    )
     if (did) arrived += 1
   }
 
-  return { checked: rows?.length ?? 0, arrived }
+  return { checked: rows?.length ?? 0, arrived, failed }
 }
 
 export async function runCleanupDeliveredTracks(): Promise<{ deleted: number }> {

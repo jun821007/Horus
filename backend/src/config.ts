@@ -1,4 +1,4 @@
-﻿import dotenv from 'dotenv'
+import dotenv from 'dotenv'
 
 dotenv.config()
 
@@ -30,6 +30,13 @@ export const config = {
   orderToolHorusReadSecret: trim('ORDER_TOOL_HORUS_READ_SECRET'),
   orderToolAppUrl: trim('ORDER_TOOL_APP_URL'),
   posApiBaseUrl: trim('POS_API_BASE_URL'),
+  trackingScrapeEnabled: trim('TRACKING_SCRAPE_ENABLED') !== 'false',
+  trackingMockDelivered: (trim('TRACKING_MOCK_DELIVERED') || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean),
+  trackingMaxRetries: Math.max(1, Number(process.env.TRACKING_MAX_RETRIES ?? 12) || 12),
+  trackingQueryDelayMs: Math.max(0, Number(process.env.TRACKING_QUERY_DELAY_MS ?? 1500) || 1500),
 }
 
 export function validateSupabaseUrl(url: string): string | null {

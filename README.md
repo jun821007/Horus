@@ -61,7 +61,7 @@ curl -X POST "https://YOUR_APP.up.railway.app/cron/daily" \
   -H "x-cron-secret: YOUR_CRON_SECRET"
 ```
 
-物流查詢預設為「運輸中」；開發可用 `TRACKING_MOCK_DELIVERED=8531039226` 模擬到貨。
+物流查詢使用 711 / 新竹官網 OCR（`tesseract.js`），每日 cron 自動查貨態；開發可用 `TRACKING_MOCK_DELIVERED=8531039226` 模擬到貨。設 `TRACKING_SCRAPE_ENABLED=false` 可停用爬蟲。
 
 ## 3. Netlify 前端
 
