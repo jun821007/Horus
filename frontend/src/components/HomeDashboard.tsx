@@ -103,13 +103,7 @@ export function HomeDashboard({ refreshKey, onNavigate, onOpenInput }: Props) {
         <div className="empty-state">尚無未讀提醒</div>
       ) : (
         upcoming.map((r) => (
-          <article
-            key={r.id}
-            className="card card-clickable"
-            onClick={() => onNavigate('reminders')}
-            role="button"
-            tabIndex={0}
-          >
+          <article key={r.id} className="card">
             <div className="card-header">
               <h3 className="card-title">{r.title}</h3>
               <span className={kindChipClass(r.kind)}>{kindLabel(r.kind)}</span>
@@ -137,14 +131,6 @@ export function HomeDashboard({ refreshKey, onNavigate, onOpenInput }: Props) {
       ) : null}
 
       <div className="quick-grid">
-        <button type="button" className="quick-link" onClick={() => onNavigate('reminders')}>
-          <span className="ql-icon">🔔</span>
-          <span className="ql-body">
-            未讀提醒
-            <span className="ql-sub">{summary?.unread_total ?? 0} 則 · 全部提醒</span>
-          </span>
-          <span className="ql-arrow">›</span>
-        </button>
         <button type="button" className="quick-link" onClick={() => onNavigate('ideas')}>
           <span className="ql-icon">💡</span>
           <span className="ql-body">
