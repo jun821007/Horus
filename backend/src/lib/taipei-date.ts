@@ -19,3 +19,9 @@ export function taipeiTomorrowYmd(): string {
 export function taipeiDayStartIso(ymd: string): string {
   return new Date(`${ymd}T00:00:00+08:00`).toISOString()
 }
+
+export function daysUntilTaipei(targetYmd: string, fromYmd = taipeiYmd()): number {
+  const a = new Date(`${fromYmd}T12:00:00+08:00`).getTime()
+  const b = new Date(`${targetYmd}T12:00:00+08:00`).getTime()
+  return Math.round((b - a) / 86400000)
+}

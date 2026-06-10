@@ -1,6 +1,7 @@
-﻿import { config } from '../config.js'
+import { config } from '../config.js'
 import { fetchIntegrationJson } from '../lib/integration-fetch.js'
-import { taipeiDayStartIso, taipeiTomorrowYmd, taipeiYmd } from '../lib/taipei-date.js'
+import { taipeiDayStartIso, taipeiTomorrowYmd, taipeiYmd, daysUntilTaipei } from '../lib/taipei-date.js'
+import { taipeiMonthRange } from '../lib/taipei-month.js'
 import { getSupabase } from '../lib/supabase.js'
 
 export type ReminderKind = 'general' | 'arrival' | 'ship_alert' | 'system' | 'hot_seller'
@@ -139,7 +140,8 @@ export async function runLycheeTomorrowReminderCron(): Promise<{
 }
 
 export async function runHotSellerReminderCron(): Promise<{ alerted: number; top_count: number }> {
-  const data = await fetchInStockHotSellers(7, 10)
+  const month = taipeiMonthRange()
+  const data = await fetchInStockHotSellers(month.dayOfMonth, 10)
   if (!data || data.items.length === 0) return { alerted: 0, top_count: 0 }
 
   if (await hasReminderToday('hot_seller')) {
@@ -147,37 +149,75 @@ export async function runHotSellerReminderCron(): Promise<{ alerted: number; top
   }
 
   await insertReminder({
-    title: '【熱銷】本週出庫 Top3',
+    title: '【熱銷】本月出庫 Top3',
     body: formatHotTop3(data.items),
     kind: 'hot_seller',
-    metadata: { source: 'instock', deep_link: config.instockAppUrl || config.instockApiBaseUrl, period_days: 7 },
+    metadata: {
+      source: 'instock',
+      deep_link: config.instockAppUrl || config.instockApiBaseUrl,
+      period_days: month.dayOfMonth,
+      period_start: month.start,
+      period_end: month.end,
+    },
   })
   return { alerted: 1, top_count: data.items.length }
 }
 
 export async function getDashboardSummary() {
   const sb = getSupabase()
+  const today = taipeiYmd()
+  const month = taipeiMonthRange()
 
   const profitPromise = import('./profit.js')
     .then((m) => m.getMonthProfitSummary())
     .catch(() => null)
 
-  const [remindersRes, tracksRes, ideasRes, profit] = await Promise.all([
+  const hotPromise = fetchInStockHotSellers(month.dayOfMonth, 10).catch(() => null)
+
+  const [remindersRes, countdownRes, tracksRes, ideasRes, profit, hotData] = await Promise.all([
     sb
       .from('reminders')
-      .select('id, title, body, kind, is_read, created_at, metadata')
+      .select('id, title, body, kind, is_read, created_at, target_ship_date, metadata')
       .order('created_at', { ascending: false })
       .limit(30),
+    sb
+      .from('reminders')
+      .select('title, body, kind, target_ship_date')
+      .not('target_ship_date', 'is', null)
+      .gte('target_ship_date', today)
+      .order('target_ship_date', { ascending: true })
+      .limit(1)
+      .maybeSingle(),
     sb.from('shipping_tracks').select('status').eq('status', '運輸中'),
     sb.from('ideas').select('id').in('status', ['pending', 'processing']),
     profitPromise,
+    hotPromise,
   ])
 
   const reminders = remindersRes.data ?? []
   const upcoming = reminders.filter((r) => !r.is_read).slice(0, 8)
 
+  const countdownRow = countdownRes.data
+  const next_countdown = countdownRow?.target_ship_date
+    ? {
+        title: countdownRow.title,
+        body: countdownRow.body ?? '',
+        kind: countdownRow.kind,
+        target_ship_date: countdownRow.target_ship_date,
+        days_until: daysUntilTaipei(countdownRow.target_ship_date, today),
+      }
+    : null
+
   return {
     upcoming_reminders: upcoming,
+    next_countdown,
+    hot_sellers: {
+      period_label: `${month.start.slice(0, 7)} 本月`,
+      period_start: month.start,
+      period_end: month.end,
+      items: hotData?.items ?? [],
+      deep_link: config.instockAppUrl || config.instockApiBaseUrl || null,
+    },
     unread_total: reminders.filter((r) => !r.is_read).length,
     shipping_in_transit: tracksRes.data?.length ?? 0,
     pending_ideas: ideasRes.data?.length ?? 0,

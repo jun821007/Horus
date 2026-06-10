@@ -1,6 +1,5 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { BodyPanel } from './components/BodyPanel'
-import { BottomNav } from './components/BottomNav'
 import { HomeDashboard } from './components/HomeDashboard'
 import { IdeasPanel } from './components/IdeasPanel'
 import { InputSheet } from './components/InputSheet'
@@ -10,25 +9,21 @@ import { ProfitDashboard } from './components/ProfitDashboard'
 import { RemindersPanel } from './components/RemindersPanel'
 import { ShippingPanel } from './components/ShippingPanel'
 import { Toast } from './components/Toast'
-import type { AppTab, SubPage } from './types/app'
+import type { AppPage } from './types/app'
 
-const SUB_TITLES: Record<NonNullable<SubPage>, string> = {
+const PAGE_TITLES: Record<AppPage, string> = {
+  home: 'Horus',
+  shipping: '單號追蹤',
+  reminders: '提醒',
+  ideas: '想法',
+  body: '身體',
   inventory: '庫存草稿',
   lychee: '荔枝出貨',
   profit: '毛利',
 }
 
-const TAB_TITLES: Record<AppTab, string> = {
-  home: 'Horus',
-  shipping: '單號',
-  reminders: '提醒',
-  ideas: '想法',
-  body: '身體',
-}
-
 export default function App() {
-  const [tab, setTab] = useState<AppTab>('home')
-  const [subPage, setSubPage] = useState<SubPage>(null)
+  const [page, setPage] = useState<AppPage>('home')
   const [inputOpen, setInputOpen] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const [toast, setToast] = useState<{ text: string; err?: boolean } | null>(null)
@@ -38,42 +33,39 @@ export default function App() {
     setToast({ text, err })
     window.setTimeout(() => setToast(null), 3500)
   }
-
-  const showFab = tab !== 'ideas' && tab !== 'shipping'
-  const headerTitle = subPage ? SUB_TITLES[subPage] : TAB_TITLES[tab]
+  const goHome = () => setPage('home')
 
   return (
     <div className="app-shell">
       <header className="app-header">
-        {subPage ? (
-          <button type="button" className="header-back" onClick={() => setSubPage(null)} aria-label="返回">‹</button>
+        {page !== 'home' ? (
+          <button type="button" className="header-back" onClick={goHome} aria-label="返回">‹</button>
         ) : (
           <img src="/icon.png" alt="" width={32} height={32} />
         )}
         <div>
-          <h1>{headerTitle}</h1>
+          <h1>{PAGE_TITLES[page]}</h1>
         </div>
       </header>
 
-      <main className={showFab ? 'app-main' : 'app-main app-main--no-fab'}>
-        {subPage === 'inventory' ? (
+      <main className="app-main">
+        {page === 'home' ? (
+          <HomeDashboard
+            refreshKey={refreshKey}
+            onNavigate={setPage}
+            onOpenInput={() => setInputOpen(true)}
+          />
+        ) : null}
+        {page === 'shipping' ? <ShippingPanel refreshKey={refreshKey} /> : null}
+        {page === 'reminders' ? <RemindersPanel refreshKey={refreshKey} /> : null}
+        {page === 'ideas' ? <IdeasPanel onMessage={showMsg} /> : null}
+        {page === 'body' ? <BodyPanel onMessage={showMsg} /> : null}
+        {page === 'inventory' ? (
           <InventoryDrafts refreshKey={refreshKey} onMessage={showMsg} onConfirmed={bump} />
         ) : null}
-        {subPage === 'lychee' ? <LycheePanel refreshKey={refreshKey} onMessage={showMsg} /> : null}
-        {subPage === 'profit' ? <ProfitDashboard refreshKey={refreshKey} onMessage={showMsg} /> : null}
-
-        {!subPage && tab === 'home' ? (
-          <HomeDashboard refreshKey={refreshKey} onNavigateTab={setTab} onOpenSub={setSubPage} />
-        ) : null}
-        {!subPage && tab === 'shipping' ? <ShippingPanel refreshKey={refreshKey} /> : null}
-        {!subPage && tab === 'reminders' ? <RemindersPanel refreshKey={refreshKey} /> : null}
-        {!subPage && tab === 'ideas' ? <IdeasPanel onMessage={showMsg} /> : null}
-        {!subPage && tab === 'body' ? <BodyPanel onMessage={showMsg} /> : null}
+        {page === 'lychee' ? <LycheePanel refreshKey={refreshKey} onMessage={showMsg} /> : null}
+        {page === 'profit' ? <ProfitDashboard refreshKey={refreshKey} onMessage={showMsg} /> : null}
       </main>
-
-      {showFab ? (
-        <button type="button" className="fab" onClick={() => setInputOpen(true)} aria-label="入庫截圖">+</button>
-      ) : null}
 
       <InputSheet
         open={inputOpen}
@@ -81,15 +73,8 @@ export default function App() {
         onResult={showMsg}
         onSuccess={() => {
           bump()
-          if (tab === 'home') setSubPage('inventory')
-        }}
-      />
-
-      <BottomNav
-        active={subPage ? 'home' : tab}
-        onChange={(t) => {
-          setSubPage(null)
-          setTab(t)
+          setInputOpen(false)
+          setPage('inventory')
         }}
       />
 

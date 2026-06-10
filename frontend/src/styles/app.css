@@ -107,12 +107,8 @@ textarea {
 
 .app-main {
   flex: 1;
-  padding: 16px 16px calc(var(--nav-h) + var(--fab-size) + 24px + var(--safe-bottom));
+  padding: 16px 16px calc(24px + var(--safe-bottom));
   overflow-y: auto;
-}
-
-.app-main--no-fab {
-  padding-bottom: calc(var(--nav-h) + 16px + var(--safe-bottom));
 }
 
 .page-title {
@@ -358,6 +354,66 @@ textarea {
   font-size: 18px;
 }
 
+.countdown-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(201, 162, 39, 0.18), rgba(74, 158, 255, 0.1));
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.countdown-card:active {
+  background: #243044;
+}
+
+.countdown-badge {
+  min-width: 56px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--gold);
+  text-align: center;
+}
+
+.countdown-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.countdown-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.countdown-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.countdown-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-clickable {
+  cursor: pointer;
+}
+
+.card-clickable:active {
+  background: #243044;
+}
+
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -538,7 +594,7 @@ textarea {
 
 .toast {
   position: fixed;
-  bottom: calc(var(--nav-h) + var(--fab-size) + 20px + var(--safe-bottom));
+  bottom: calc(24px + var(--safe-bottom));
   left: 50%;
   transform: translateX(-50%);
   width: calc(100% - 32px);

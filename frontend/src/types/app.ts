@@ -1,3 +1,9 @@
-export type AppTab = 'home' | 'shipping' | 'reminders' | 'ideas' | 'body'
-
-export type SubPage = 'inventory' | 'lychee' | 'profit' | null
+export type AppPage =
+  | 'home'
+  | 'shipping'
+  | 'reminders'
+  | 'ideas'
+  | 'body'
+  | 'inventory'
+  | 'lychee'
+  | 'profit'
