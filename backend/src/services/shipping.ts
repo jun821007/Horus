@@ -1,4 +1,4 @@
-﻿import { resolveCarrier, type Carrier } from '../lib/carrier.js'
+import { normalizeTrackingNumber, resolveCarrier, type Carrier } from '../lib/carrier.js'
 import { getSupabase } from '../lib/supabase.js'
 import { queryCarrierStatus } from '../lib/tracking-provider.js'
 import { notifyArrival } from './reminders.js'
@@ -32,10 +32,9 @@ export async function syncShippingTrackFromOrderTool(input: {
   shipping_method?: string | null
   source_meta?: Record<string, unknown>
 }): Promise<{ tracking_number: string; carrier: Carrier; arrived: boolean }> {
-  const tn = input.tracking_number.replace(/\D/g, '')
+  const carrier = resolveCarrier(input.tracking_number, input.shipping_method)
+  const tn = normalizeTrackingNumber(input.tracking_number, carrier)
   if (!tn) throw new Error('invalid tracking number')
-
-  const carrier = resolveCarrier(tn, input.shipping_method)
   const sb = getSupabase()
 
   const { data: existing } = await sb

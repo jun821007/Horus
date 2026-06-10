@@ -21,7 +21,7 @@ export type GeminiTaobaoResult = {
 export type GeminiParseResult = GeminiTrackingResult | GeminiTaobaoResult | { task_type: 'unknown'; raw: string }
 
 const TRACKING_SYSTEM = `你是台灣物流單號解析器。從使用者文字提取：
-- tracking_number：純數字單號（7-15位）
+- tracking_number：單號（新竹/黑貓多為純數字；7-11 超商可含英數 8-12 碼，保留原樣）
 - content_summary：內容物描述（簡短）
 - carrier_hint：新竹物流 | 黑貓 | 超商 或空字串
 只回傳 JSON，格式：

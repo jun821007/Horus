@@ -12,21 +12,24 @@ export type ScrapeResult = {
   events: string[]
 }
 
-function pickViewState(html: string): { viewState: string; viewStateGenerator: string } {
+function pickAspNetFields(html: string): Record<string, string> {
   const $ = cheerio.load(html)
-  const viewState = $('input#__VIEWSTATE').attr('value') ?? ''
-  const viewStateGenerator = $('input#__VIEWSTATEGENERATOR').attr('value') ?? ''
-  if (!viewState) throw new Error('711: missing __VIEWSTATE')
-  return { viewState, viewStateGenerator }
+  const fields: Record<string, string> = {}
+  $('input[type="hidden"]').each((_, el) => {
+    const name = $(el).attr('name')
+    if (name) fields[name] = $(el).attr('value') ?? ''
+  })
+  return fields
 }
 
 function parse711Result(html: string): ScrapeResult | null {
   const $ = cheerio.load(html)
   const page = $('#txtPage').attr('value') ?? $('input[name="txtPage"]').attr('value') ?? '1'
   if (page !== '2') {
-    if (isCaptchaError($.text())) return null
-    if (isNoData($.text())) {
-      return { delivered: false, statusText: '查無貨態', events: [] }
+    if (isCaptchaError($.text()) || isCaptchaError(html)) return null
+    const msg = $('#lbMsg').text().replace(/\s+/g, ' ').trim()
+    if (isNoData(msg) || isNoData($.text())) {
+      return { delivered: false, statusText: msg || '查無貨態', events: [] }
     }
     return null
   }
@@ -50,13 +53,14 @@ export async function querySevenElevenTracking(
   trackingNumber: string,
   maxAttempts = 12,
 ): Promise<ScrapeResult> {
+  const tn = trackingNumber.trim().replace(/\s+/g, '')
   let lastError = '711 查詢失敗'
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     const session = new TrackingHttpSession()
     try {
       const searchHtml = await session.getText(SEARCH_URL)
-      const { viewState, viewStateGenerator } = pickViewState(searchHtml)
+      const aspNet = pickAspNetFields(searchHtml)
       const captchaUrl = absUrl(SEARCH_URL, `ValidateImage.aspx?ts=${Date.now()}`)
       const captchaBuf = await session.getBuffer(captchaUrl)
 
@@ -76,12 +80,10 @@ export async function querySevenElevenTracking(
       }
 
       const body: Record<string, string> = {
-        __LASTFOCUS: '',
-        __EVENTTARGET: '',
+        ...aspNet,
+        __EVENTTARGET: 'submit',
         __EVENTARGUMENT: '',
-        __VIEWSTATE: viewState,
-        __VIEWSTATEGENERATOR: viewStateGenerator,
-        txtProductNum: trackingNumber,
+        txtProductNum: tn,
         tbChkCode: code,
         aaa: '',
         txtIMGName: '',

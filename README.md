@@ -63,6 +63,12 @@ curl -X POST "https://YOUR_APP.up.railway.app/cron/daily" \
 
 物流查詢使用 711 / 新竹官網 OCR（`tesseract.js`），每日 cron 自動查貨態；開發可用 `TRACKING_MOCK_DELIVERED=8531039226` 模擬到貨。設 `TRACKING_SCRAPE_ENABLED=false` 可停用爬蟲。
 
+```bash
+cd backend
+npm run test:tracking -- 8531038342   # 新竹
+npm run test:711 -- 你的交貨便單號      # 7-11（8 碼寄件 / 11 碼取件，可含英數）
+```
+
 ## 3. Netlify 前端
 
 ```bash
