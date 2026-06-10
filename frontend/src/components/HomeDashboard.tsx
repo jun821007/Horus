@@ -106,7 +106,7 @@ export function HomeDashboard({ refreshKey, onNavigate, onOpenInput }: Props) {
 
       <div className="section-title">即將到來的提醒</div>
       {upcoming.length === 0 ? (
-        <div className="empty-state">尚無提醒</div>
+        <div className="empty-state">尚無未讀提醒</div>
       ) : (
         upcoming.map((r) => (
           <article

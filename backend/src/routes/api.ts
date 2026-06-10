@@ -99,6 +99,7 @@ apiRouter.get('/reminders', async (_req, res) => {
   const { data, error } = await sb
     .from('reminders')
     .select('*')
+    .eq('is_read', false)
     .order('created_at', { ascending: false })
     .limit(100)
   if (error) return res.status(500).json({ error: error.message })
