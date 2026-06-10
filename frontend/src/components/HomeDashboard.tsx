@@ -104,60 +104,6 @@ export function HomeDashboard({ refreshKey, onNavigate, onOpenInput }: Props) {
     <div className="panel">
       <h2 className="page-title">今日總覽</h2>
 
-      {countdown ? (
-        <button
-          type="button"
-          className="countdown-card"
-          onClick={() => openExternal(countdown.deep_link)}
-          disabled={!countdown.deep_link}
-        >
-          <div className="countdown-badge">{countdown.days_label}</div>
-          <div className="countdown-body">
-            <div className="countdown-title">{countdown.title}</div>
-            <div className="countdown-sub">
-              {countdown.due_date}
-              {countdown.subtitle ? ` · ${countdown.subtitle}` : ''}
-            </div>
-          </div>
-          {countdown.deep_link ? <span className="ql-arrow" aria-hidden>›</span> : null}
-        </button>
-      ) : null}
-
-      <div className="section-title">快捷功能</div>
-      <div className="quick-grid">
-        <button type="button" className="quick-link" onClick={onOpenInput}>
-          <span className="ql-icon">📷</span>
-          <span className="ql-body">
-            入庫截圖
-            <span className="ql-sub">貼上淘寶採購截圖建立草稿</span>
-          </span>
-          <span className="ql-arrow">›</span>
-        </button>
-        <div className="quick-link quick-link--static">
-          <span className="ql-icon">🔥</span>
-          <span className="ql-body">
-            本月熱銷款
-            <span className="ql-sub">{hotPreview}</span>
-          </span>
-        </div>
-        <button type="button" className="quick-link" onClick={() => onNavigate('inventory')}>
-          <span className="ql-icon">📋</span>
-          <span className="ql-body">
-            庫存草稿
-            <span className="ql-sub">確認 OCR 入庫</span>
-          </span>
-          <span className="ql-arrow">›</span>
-        </button>
-        <button type="button" className="quick-link" onClick={() => onNavigate('body')}>
-          <span className="ql-icon">💪</span>
-          <span className="ql-body">
-            身體紀錄
-            <span className="ql-sub">訓練與體重</span>
-          </span>
-          <span className="ql-arrow">›</span>
-        </button>
-      </div>
-
       <div className="section-title">即將到來的提醒</div>
       {upcoming.length === 0 ? (
         <div className="empty-state">尚無提醒</div>
@@ -179,16 +125,26 @@ export function HomeDashboard({ refreshKey, onNavigate, onOpenInput }: Props) {
         ))
       )}
 
-      <div className="section-title">總覽</div>
-      <div className="quick-grid">
-        <button type="button" className="quick-link" onClick={() => onNavigate('shipping')}>
-          <span className="ql-icon">📦</span>
-          <span className="ql-body">
-            運輸中
-            <span className="ql-sub">{summary?.shipping_in_transit ?? 0} 筆 · 單號追蹤</span>
-          </span>
-          <span className="ql-arrow">›</span>
+      {countdown ? (
+        <button
+          type="button"
+          className="countdown-card"
+          onClick={() => openExternal(countdown.deep_link)}
+          disabled={!countdown.deep_link}
+        >
+          <div className="countdown-badge">{countdown.days_label}</div>
+          <div className="countdown-body">
+            <div className="countdown-title">{countdown.title}</div>
+            <div className="countdown-sub">
+              {countdown.due_date}
+              {countdown.subtitle ? ` · ${countdown.subtitle}` : ''}
+            </div>
+          </div>
+          {countdown.deep_link ? <span className="ql-arrow" aria-hidden>›</span> : null}
         </button>
+      ) : null}
+
+      <div className="quick-grid">
         <button type="button" className="quick-link" onClick={() => onNavigate('reminders')}>
           <span className="ql-icon">🔔</span>
           <span className="ql-body">
@@ -212,6 +168,45 @@ export function HomeDashboard({ refreshKey, onNavigate, onOpenInput }: Props) {
             <span className="ql-sub">
               {money(summary?.profit_month_total ?? 0)} · 日均 {money(summary?.profit_daily_average ?? 0)} · {periodHint}
             </span>
+          </span>
+          <span className="ql-arrow">›</span>
+        </button>
+        <button type="button" className="quick-link" onClick={() => onNavigate('shipping')}>
+          <span className="ql-icon">📦</span>
+          <span className="ql-body">
+            運輸中
+            <span className="ql-sub">{summary?.shipping_in_transit ?? 0} 筆 · 單號追蹤</span>
+          </span>
+          <span className="ql-arrow">›</span>
+        </button>
+        <div className="quick-link quick-link--static">
+          <span className="ql-icon">🔥</span>
+          <span className="ql-body">
+            本月熱銷款
+            <span className="ql-sub">{hotPreview}</span>
+          </span>
+        </div>
+        <button type="button" className="quick-link" onClick={() => onNavigate('body')}>
+          <span className="ql-icon">💪</span>
+          <span className="ql-body">
+            身體紀錄
+            <span className="ql-sub">訓練與體重</span>
+          </span>
+          <span className="ql-arrow">›</span>
+        </button>
+        <button type="button" className="quick-link" onClick={() => onNavigate('inventory')}>
+          <span className="ql-icon">📋</span>
+          <span className="ql-body">
+            庫存草稿
+            <span className="ql-sub">確認 OCR 入庫</span>
+          </span>
+          <span className="ql-arrow">›</span>
+        </button>
+        <button type="button" className="quick-link" onClick={onOpenInput}>
+          <span className="ql-icon">📷</span>
+          <span className="ql-body">
+            入庫截圖
+            <span className="ql-sub">貼上淘寶採購截圖建立草稿</span>
           </span>
           <span className="ql-arrow">›</span>
         </button>

@@ -309,6 +309,7 @@ textarea {
 .quick-grid {
   display: grid;
   gap: 8px;
+  margin-top: 20px;
 }
 
 .quick-link {
@@ -372,6 +373,7 @@ textarea {
   align-items: center;
   gap: 14px;
   width: 100%;
+  margin-top: 16px;
   margin-bottom: 8px;
   padding: 16px;
   background: linear-gradient(135deg, rgba(201, 162, 39, 0.18), rgba(74, 158, 255, 0.1));
