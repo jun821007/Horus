@@ -1,8 +1,9 @@
 import { config } from '../config.js'
 import { fetchIntegrationJson } from '../lib/integration-fetch.js'
-import { taipeiDayStartIso, taipeiTomorrowYmd, taipeiYmd, daysUntilTaipei } from '../lib/taipei-date.js'
+import { taipeiDayStartIso, taipeiTomorrowYmd, taipeiYmd } from '../lib/taipei-date.js'
 import { taipeiMonthRange } from '../lib/taipei-month.js'
 import { getSupabase } from '../lib/supabase.js'
+import { fetchLifeCountdowns } from './life-countdown.js'
 
 export type ReminderKind = 'general' | 'arrival' | 'ship_alert' | 'system' | 'hot_seller'
 
@@ -165,7 +166,6 @@ export async function runHotSellerReminderCron(): Promise<{ alerted: number; top
 
 export async function getDashboardSummary() {
   const sb = getSupabase()
-  const today = taipeiYmd()
   const month = taipeiMonthRange()
 
   const profitPromise = import('./profit.js')
@@ -173,38 +173,28 @@ export async function getDashboardSummary() {
     .catch(() => null)
 
   const hotPromise = fetchInStockHotSellers(month.dayOfMonth, 10).catch(() => null)
+  const lifeCountdownPromise = fetchLifeCountdowns().catch(() => null)
 
-  const [remindersRes, countdownRes, tracksRes, ideasRes, profit, hotData] = await Promise.all([
+  const [remindersRes, tracksRes, ideasRes, profit, hotData, lifeCountdown] = await Promise.all([
     sb
       .from('reminders')
-      .select('id, title, body, kind, is_read, created_at, target_ship_date, metadata')
+      .select('id, title, body, kind, is_read, created_at, metadata')
       .order('created_at', { ascending: false })
       .limit(30),
-    sb
-      .from('reminders')
-      .select('title, body, kind, target_ship_date')
-      .not('target_ship_date', 'is', null)
-      .gte('target_ship_date', today)
-      .order('target_ship_date', { ascending: true })
-      .limit(1)
-      .maybeSingle(),
     sb.from('shipping_tracks').select('status').eq('status', '運輸中'),
     sb.from('ideas').select('id').in('status', ['pending', 'processing']),
     profitPromise,
     hotPromise,
+    lifeCountdownPromise,
   ])
 
   const reminders = remindersRes.data ?? []
   const upcoming = reminders.filter((r) => !r.is_read).slice(0, 8)
 
-  const countdownRow = countdownRes.data
-  const next_countdown = countdownRow?.target_ship_date
+  const next_countdown = lifeCountdown?.next
     ? {
-        title: countdownRow.title,
-        body: countdownRow.body ?? '',
-        kind: countdownRow.kind,
-        target_ship_date: countdownRow.target_ship_date,
-        days_until: daysUntilTaipei(countdownRow.target_ship_date, today),
+        ...lifeCountdown.next,
+        deep_link: lifeCountdown.next.deep_link || config.lifeAppUrl || null,
       }
     : null
 

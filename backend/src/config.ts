@@ -29,6 +29,9 @@ export const config = {
   orderToolApiBaseUrl: trim('ORDER_TOOL_API_BASE_URL'),
   orderToolHorusReadSecret: trim('ORDER_TOOL_HORUS_READ_SECRET'),
   orderToolAppUrl: trim('ORDER_TOOL_APP_URL'),
+  lifeApiBaseUrl: trim('LIFE_API_BASE_URL'),
+  lifeHorusReadSecret: trim('LIFE_HORUS_READ_SECRET'),
+  lifeAppUrl: trim('LIFE_APP_URL'),
   posApiBaseUrl: trim('POS_API_BASE_URL'),
   trackingScrapeEnabled: trim('TRACKING_SCRAPE_ENABLED') !== 'false',
   trackingMockDelivered: (trim('TRACKING_MOCK_DELIVERED') || '')

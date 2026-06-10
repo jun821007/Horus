@@ -9,16 +9,17 @@ type ReminderItem = {
   kind: string
   is_read: boolean
   created_at: string
-  target_ship_date?: string | null
   metadata?: { deep_link?: string } | null
 }
 
 type CountdownItem = {
+  id: string
   title: string
-  body: string
-  kind: string
-  target_ship_date: string
+  due_date: string
   days_until: number
+  days_label: string
+  subtitle: string | null
+  deep_link: string | null
 }
 
 type HotSellerItem = {
@@ -72,12 +73,6 @@ function money(n: number) {
   return `$${Math.round(n).toLocaleString()}`
 }
 
-function countdownLabel(days: number): string {
-  if (days <= 0) return '就是今天'
-  if (days === 1) return '明天'
-  return `還有 ${days} 天`
-}
-
 function openExternal(url: string | null | undefined) {
   if (!url) return
   window.open(url, '_blank', 'noopener,noreferrer')
@@ -110,18 +105,21 @@ export function HomeDashboard({ refreshKey, onNavigate, onOpenInput }: Props) {
       <h2 className="page-title">今日總覽</h2>
 
       {countdown ? (
-        <button type="button" className="countdown-card" onClick={() => onNavigate('reminders')}>
-          <div className="countdown-badge">
-            {countdown.days_until <= 0 ? 'D-Day' : `D-${countdown.days_until}`}
-          </div>
+        <button
+          type="button"
+          className="countdown-card"
+          onClick={() => openExternal(countdown.deep_link)}
+          disabled={!countdown.deep_link}
+        >
+          <div className="countdown-badge">{countdown.days_label}</div>
           <div className="countdown-body">
             <div className="countdown-title">{countdown.title}</div>
             <div className="countdown-sub">
-              {countdownLabel(countdown.days_until)} · {countdown.target_ship_date}
+              {countdown.due_date}
+              {countdown.subtitle ? ` · ${countdown.subtitle}` : ''}
             </div>
-            {countdown.body ? <div className="countdown-meta">{countdown.body}</div> : null}
           </div>
-          <span className="ql-arrow" aria-hidden>›</span>
+          {countdown.deep_link ? <span className="ql-arrow" aria-hidden>›</span> : null}
         </button>
       ) : null}
 
@@ -135,18 +133,13 @@ export function HomeDashboard({ refreshKey, onNavigate, onOpenInput }: Props) {
           </span>
           <span className="ql-arrow">›</span>
         </button>
-        <button
-          type="button"
-          className="quick-link"
-          onClick={() => openExternal(summary?.hot_sellers.deep_link)}
-        >
+        <div className="quick-link quick-link--static">
           <span className="ql-icon">🔥</span>
           <span className="ql-body">
             本月熱銷款
             <span className="ql-sub">{hotPreview}</span>
           </span>
-          <span className="ql-arrow">›</span>
-        </button>
+        </div>
         <button type="button" className="quick-link" onClick={() => onNavigate('inventory')}>
           <span className="ql-icon">📋</span>
           <span className="ql-body">
@@ -182,47 +175,47 @@ export function HomeDashboard({ refreshKey, onNavigate, onOpenInput }: Props) {
               <span className={kindChipClass(r.kind)}>{kindLabel(r.kind)}</span>
             </div>
             {r.body ? <p className="card-meta">{r.body}</p> : null}
-            {r.target_ship_date ? (
-              <p className="card-meta">{countdownLabel(daysUntil(r.target_ship_date))} · {r.target_ship_date}</p>
-            ) : null}
           </article>
         ))
       )}
 
-      <div className="stat-grid" style={{ marginTop: 16 }}>
-        <button type="button" className="stat-card" onClick={() => onNavigate('shipping')}>
-          <div className="stat-label">運輸中</div>
-          <div className="stat-value">{summary?.shipping_in_transit ?? 0}</div>
-          <div className="stat-hint">單號追蹤</div>
+      <div className="section-title">總覽</div>
+      <div className="quick-grid">
+        <button type="button" className="quick-link" onClick={() => onNavigate('shipping')}>
+          <span className="ql-icon">📦</span>
+          <span className="ql-body">
+            運輸中
+            <span className="ql-sub">{summary?.shipping_in_transit ?? 0} 筆 · 單號追蹤</span>
+          </span>
+          <span className="ql-arrow">›</span>
         </button>
-        <button type="button" className="stat-card" onClick={() => onNavigate('reminders')}>
-          <div className="stat-label">未讀提醒</div>
-          <div className="stat-value">{summary?.unread_total ?? 0}</div>
-          <div className="stat-hint">全部提醒</div>
+        <button type="button" className="quick-link" onClick={() => onNavigate('reminders')}>
+          <span className="ql-icon">🔔</span>
+          <span className="ql-body">
+            未讀提醒
+            <span className="ql-sub">{summary?.unread_total ?? 0} 則 · 全部提醒</span>
+          </span>
+          <span className="ql-arrow">›</span>
         </button>
-        <button type="button" className="stat-card" onClick={() => onNavigate('ideas')}>
-          <div className="stat-label">待決策</div>
-          <div className="stat-value gold">{summary?.pending_ideas ?? 0}</div>
-          <div className="stat-hint">想法</div>
+        <button type="button" className="quick-link" onClick={() => onNavigate('ideas')}>
+          <span className="ql-icon">💡</span>
+          <span className="ql-body">
+            待決策
+            <span className="ql-sub">{summary?.pending_ideas ?? 0} 則 · 想法</span>
+          </span>
+          <span className="ql-arrow">›</span>
         </button>
-        <button type="button" className="stat-card" onClick={() => onNavigate('profit')}>
-          <div className="stat-label">本月毛利</div>
-          <div className="stat-value gold">{money(summary?.profit_month_total ?? 0)}</div>
-          <div className="stat-hint">日均 {money(summary?.profit_daily_average ?? 0)} · {periodHint}</div>
+        <button type="button" className="quick-link" onClick={() => onNavigate('profit')}>
+          <span className="ql-icon">💰</span>
+          <span className="ql-body">
+            本月毛利
+            <span className="ql-sub">
+              {money(summary?.profit_month_total ?? 0)} · 日均 {money(summary?.profit_daily_average ?? 0)} · {periodHint}
+            </span>
+          </span>
+          <span className="ql-arrow">›</span>
         </button>
       </div>
     </div>
   )
-}
-
-function daysUntil(targetYmd: string): number {
-  const today = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Taipei',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date())
-  const a = new Date(`${today}T12:00:00+08:00`).getTime()
-  const b = new Date(`${targetYmd}T12:00:00+08:00`).getTime()
-  return Math.round((b - a) / 86400000)
 }

@@ -331,6 +331,19 @@ textarea {
   background: #243044;
 }
 
+.quick-link--static {
+  cursor: default;
+}
+
+.quick-link--static:active {
+  background: var(--bg-card);
+}
+
+.countdown-card:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
 .quick-link .ql-icon {
   font-size: 22px;
   width: 36px;
