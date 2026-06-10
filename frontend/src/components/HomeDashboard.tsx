@@ -48,12 +48,12 @@ type DashboardSummary = {
   profit_custom: number
   profit_period_start: string | null
   profit_period_end: string | null
+  inventory_draft_count: number
 }
 
 type Props = {
   refreshKey: number
   onNavigate: (page: AppPage) => void
-  onOpenInput: () => void
 }
 
 function kindLabel(kind: string): string {
@@ -72,7 +72,7 @@ function money(n: number) {
   return `$${Math.round(n).toLocaleString()}`
 }
 
-export function HomeDashboard({ refreshKey, onNavigate, onOpenInput }: Props) {
+export function HomeDashboard({ refreshKey, onNavigate }: Props) {
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
 
   const load = useCallback(async () => {
@@ -93,6 +93,9 @@ export function HomeDashboard({ refreshKey, onNavigate, onOpenInput }: Props) {
     summary?.profit_period_start && summary?.profit_period_end
       ? `${summary.profit_period_start} ~ ${summary.profit_period_end}`
       : '本月'
+  const draftCount = summary?.inventory_draft_count ?? 0
+  const inventoryHint =
+    draftCount > 0 ? `${draftCount} 筆待確認` : '貼截圖建立入庫'
 
   return (
     <div className="panel">
@@ -173,18 +176,10 @@ export function HomeDashboard({ refreshKey, onNavigate, onOpenInput }: Props) {
           <span className="ql-arrow">›</span>
         </button>
         <button type="button" className="quick-link" onClick={() => onNavigate('inventory')}>
-          <span className="ql-icon">📋</span>
+          <span className="ql-icon">🛒</span>
           <span className="ql-body">
-            庫存草稿
-            <span className="ql-sub">確認 OCR 入庫</span>
-          </span>
-          <span className="ql-arrow">›</span>
-        </button>
-        <button type="button" className="quick-link" onClick={onOpenInput}>
-          <span className="ql-icon">📷</span>
-          <span className="ql-body">
-            入庫截圖
-            <span className="ql-sub">貼上淘寶採購截圖建立草稿</span>
+            淘寶入庫
+            <span className="ql-sub">{inventoryHint}</span>
           </span>
           <span className="ql-arrow">›</span>
         </button>

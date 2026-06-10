@@ -10,6 +10,7 @@ import {
   deleteProfitAdjustment,
   deleteProfitCategory,
   getMonthProfitSummary,
+  getProfitHistory,
   listProfitCategories,
 } from '../services/profit.js'
 import { getSupabase } from '../lib/supabase.js'
@@ -140,10 +141,21 @@ apiRouter.post('/lychee-shipments', async (req, res) => {
   }
 })
 
-apiRouter.get('/profits/summary', async (_req, res) => {
+apiRouter.get('/profits/summary', async (req, res) => {
   try {
-    const summary = await getMonthProfitSummary()
+    const month = typeof req.query.month === 'string' ? req.query.month : undefined
+    const summary = await getMonthProfitSummary(month)
     res.json({ ok: true, ...summary })
+  } catch (e) {
+    res.status(500).json({ ok: false, error: formatError(e) })
+  }
+})
+
+apiRouter.get('/profits/history', async (req, res) => {
+  try {
+    const months = req.query.months ? Number(req.query.months) : 12
+    const items = await getProfitHistory(Number.isFinite(months) ? months : 12)
+    res.json({ ok: true, items })
   } catch (e) {
     res.status(500).json({ ok: false, error: formatError(e) })
   }

@@ -1,6 +1,11 @@
 ﻿import { getSupabase } from '../lib/supabase.js'
-import { taipeiMonthRange } from '../lib/taipei-month.js'
-import { getPosMonthProfit } from './pos-profit.js'
+import {
+  recentYearMonths,
+  taipeiCurrentYearMonth,
+  taipeiMonthRange,
+  taipeiMonthRangeFor,
+} from '../lib/taipei-month.js'
+import { fetchPosHistory, getPosMonthProfit, posRowDateKey, posRowProfit } from './pos-profit.js'
 
 export type ProfitCategory = {
   id: string
@@ -17,6 +22,28 @@ export type ProfitAdjustment = {
   profit_date: string
   note: string | null
   created_at: string
+}
+
+export type ProfitDayItem = {
+  name: string
+  profit: number
+  source: 'pos' | 'custom'
+}
+
+export type ProfitDayBreakdown = {
+  date: string
+  total: number
+  item_count: number
+  items: ProfitDayItem[]
+}
+
+export type ProfitMonthHistory = {
+  year_month: string
+  period_start: string
+  period_end: string
+  month_total: number
+  pos_profit: number
+  custom_profit: number
 }
 
 export async function listProfitCategories(activeOnly = true): Promise<ProfitCategory[]> {
@@ -89,10 +116,65 @@ export async function deleteProfitAdjustment(id: string): Promise<void> {
   if (error) throw error
 }
 
-export async function getMonthProfitSummary() {
-  const { start, end, dayOfMonth } = taipeiMonthRange()
+function buildDailyBreakdown(
+  posRows: Awaited<ReturnType<typeof getPosMonthProfit>>['rows'],
+  adjustments: Awaited<ReturnType<typeof listMonthAdjustments>>,
+): ProfitDayBreakdown[] {
+  const dayMap = new Map<string, ProfitDayItem[]>()
+
+  for (const row of posRows) {
+    const profit = posRowProfit(row)
+    const date = posRowDateKey(row)
+    if (profit == null || !date) continue
+    const items = dayMap.get(date) ?? []
+    items.push({ name: row.itemName?.trim() || 'POS 項目', profit, source: 'pos' })
+    dayMap.set(date, items)
+  }
+
+  for (const row of adjustments) {
+    const date = row.profit_date
+    const profit = Math.round(Number(row.net_profit))
+    const items = dayMap.get(date) ?? []
+    const cat = row as { profit_categories?: { name?: string } | null }
+    const label = row.item_name?.trim() || cat.profit_categories?.name || '自定義收益'
+    items.push({ name: label, profit, source: 'custom' })
+    dayMap.set(date, items)
+  }
+
+  return [...dayMap.entries()]
+    .map(([date, items]) => ({
+      date,
+      total: items.reduce((sum, i) => sum + i.profit, 0),
+      item_count: items.length,
+      items,
+    }))
+    .sort((a, b) => b.date.localeCompare(a.date))
+}
+
+function sumPosProfitForMonth(rows: Awaited<ReturnType<typeof getPosMonthProfit>>['rows'], start: string, end: string) {
+  let total = 0
+  for (const row of rows) {
+    const profit = posRowProfit(row)
+    const date = posRowDateKey(row)
+    if (profit == null || !date || date < start || date > end) continue
+    total += profit
+  }
+  return total
+}
+
+function sumCustomForMonth(adjustments: Awaited<ReturnType<typeof listMonthAdjustments>>, start: string, end: string) {
+  return adjustments
+    .filter((row) => row.profit_date >= start && row.profit_date <= end)
+    .reduce((sum, row) => sum + Number(row.net_profit), 0)
+}
+
+export async function getMonthProfitSummary(yearMonth?: string) {
+  const monthKey = yearMonth?.trim() || taipeiCurrentYearMonth()
+  const { start, end, dayOfMonth, year_month } = taipeiMonthRangeFor(monthKey)
+  const isCurrentMonth = year_month === taipeiCurrentYearMonth()
+
   const [posRes, adjustments, categories] = await Promise.all([
-    getPosMonthProfit(),
+    getPosMonthProfit(year_month),
     listMonthAdjustments(start, end),
     listProfitCategories(true),
   ])
@@ -114,6 +196,8 @@ export async function getMonthProfitSummary() {
   const dailyAverage = dayOfMonth > 0 ? Math.round(monthTotal / dayOfMonth) : 0
 
   return {
+    year_month,
+    is_current_month: isCurrentMonth,
     period_start: start,
     period_end: end,
     day_of_month: dayOfMonth,
@@ -125,5 +209,33 @@ export async function getMonthProfitSummary() {
     custom_by_category: [...byCategoryMap.values()],
     adjustments,
     categories,
+    daily_breakdown: buildDailyBreakdown(posRes.rows, adjustments),
   }
+}
+
+export async function getProfitHistory(monthCount = 12): Promise<ProfitMonthHistory[]> {
+  const months = recentYearMonths(monthCount)
+  const oldest = months[months.length - 1]!
+  const newest = months[0]!
+  const rangeStart = taipeiMonthRangeFor(oldest).start
+  const rangeEnd = taipeiMonthRangeFor(newest).end
+
+  const [posRows, adjustments] = await Promise.all([
+    fetchPosHistory(rangeStart, rangeEnd).catch(() => []),
+    listMonthAdjustments(rangeStart, rangeEnd),
+  ])
+
+  return months.map((year_month) => {
+    const { start, end } = taipeiMonthRangeFor(year_month)
+    const posProfit = sumPosProfitForMonth(posRows, start, end)
+    const customProfit = Math.round(sumCustomForMonth(adjustments, start, end))
+    return {
+      year_month,
+      period_start: start,
+      period_end: end,
+      pos_profit: posProfit,
+      custom_profit: customProfit,
+      month_total: posProfit + customProfit,
+    }
+  })
 }

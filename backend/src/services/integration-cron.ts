@@ -175,7 +175,7 @@ export async function getDashboardSummary() {
   const hotPromise = fetchInStockHotSellers(month.dayOfMonth, 10).catch(() => null)
   const lifeCountdownPromise = fetchLifeCountdowns().catch(() => null)
 
-  const [remindersRes, tracksRes, ideasRes, profit, hotData, lifeCountdown] = await Promise.all([
+  const [remindersRes, tracksRes, ideasRes, profit, hotData, lifeCountdown, draftsRes] = await Promise.all([
     sb
       .from('reminders')
       .select('id, title, body, kind, is_read, created_at, metadata')
@@ -186,6 +186,7 @@ export async function getDashboardSummary() {
     profitPromise,
     hotPromise,
     lifeCountdownPromise,
+    sb.from('inventory_drafts').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
   ])
 
   const reminders = remindersRes.data ?? []
@@ -227,6 +228,7 @@ export async function getDashboardSummary() {
     profit_custom: profit?.custom_profit ?? 0,
     profit_period_start: profit?.period_start ?? null,
     profit_period_end: profit?.period_end ?? null,
+    inventory_draft_count: draftsRes.count ?? 0,
   }
 }
 

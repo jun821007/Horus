@@ -340,6 +340,43 @@ textarea {
   background: var(--bg-card);
 }
 
+.quick-link--active {
+  border-color: rgba(201, 162, 39, 0.45);
+  background: rgba(201, 162, 39, 0.08);
+}
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.month-nav-label {
+  min-width: 96px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.month-nav-btn {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text);
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.month-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
 .countdown-card:disabled {
   cursor: default;
   opacity: 1;
