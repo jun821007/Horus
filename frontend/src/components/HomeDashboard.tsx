@@ -19,7 +19,6 @@ type CountdownItem = {
   days_until: number
   days_label: string
   subtitle: string | null
-  deep_link: string | null
 }
 
 type HotSellerItem = {
@@ -32,7 +31,7 @@ type HotSellerItem = {
 type DashboardSummary = {
   ok: boolean
   upcoming_reminders: ReminderItem[]
-  next_countdown: CountdownItem | null
+  countdowns: CountdownItem[]
   hot_sellers: {
     period_label: string
     period_start: string
@@ -73,11 +72,6 @@ function money(n: number) {
   return `$${Math.round(n).toLocaleString()}`
 }
 
-function openExternal(url: string | null | undefined) {
-  if (!url) return
-  window.open(url, '_blank', 'noopener,noreferrer')
-}
-
 export function HomeDashboard({ refreshKey, onNavigate, onOpenInput }: Props) {
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
 
@@ -89,7 +83,7 @@ export function HomeDashboard({ refreshKey, onNavigate, onOpenInput }: Props) {
   useEffect(() => { void load() }, [load, refreshKey])
 
   const upcoming = summary?.upcoming_reminders ?? []
-  const countdown = summary?.next_countdown
+  const countdowns = summary?.countdowns ?? []
   const hotPreview =
     summary?.hot_sellers.items
       ?.slice(0, 3)
@@ -125,23 +119,21 @@ export function HomeDashboard({ refreshKey, onNavigate, onOpenInput }: Props) {
         ))
       )}
 
-      {countdown ? (
-        <button
-          type="button"
-          className="countdown-card"
-          onClick={() => openExternal(countdown.deep_link)}
-          disabled={!countdown.deep_link}
-        >
-          <div className="countdown-badge">{countdown.days_label}</div>
-          <div className="countdown-body">
-            <div className="countdown-title">{countdown.title}</div>
-            <div className="countdown-sub">
-              {countdown.due_date}
-              {countdown.subtitle ? ` · ${countdown.subtitle}` : ''}
+      {countdowns.length > 0 ? (
+        <div className="countdown-list">
+          {countdowns.map((item) => (
+            <div key={item.id} className="countdown-card countdown-card--static">
+              <div className="countdown-badge">{item.days_label}</div>
+              <div className="countdown-body">
+                <div className="countdown-title">{item.title}</div>
+                <div className="countdown-sub">
+                  {item.due_date}
+                  {item.subtitle ? ` · ${item.subtitle}` : ''}
+                </div>
+              </div>
             </div>
-          </div>
-          {countdown.deep_link ? <span className="ql-arrow" aria-hidden>›</span> : null}
-        </button>
+          ))}
+        </div>
       ) : null}
 
       <div className="quick-grid">

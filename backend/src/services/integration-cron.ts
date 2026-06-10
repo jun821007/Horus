@@ -198,9 +198,19 @@ export async function getDashboardSummary() {
       }
     : null
 
+  const countdowns = (lifeCountdown?.items ?? []).map((item) => ({
+    id: item.id,
+    title: item.title,
+    due_date: item.due_date,
+    days_until: item.days_until,
+    days_label: item.days_label,
+    subtitle: item.subtitle,
+  }))
+
   return {
     upcoming_reminders: upcoming,
     next_countdown,
+    countdowns,
     hot_sellers: {
       period_label: `${month.start.slice(0, 7)} 本月`,
       period_start: month.start,
