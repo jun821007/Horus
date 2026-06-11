@@ -1,5 +1,5 @@
 import { config } from '../config.js'
-import { formatShippingDisplay, type ParcelLine } from '../lib/shipping-display.js'
+import { formatShippingDisplay, parseLegacyContentSummary, type ParcelLine } from '../lib/shipping-display.js'
 import { fetchIntegrationJson } from '../lib/integration-fetch.js'
 import { syncShippingTrackFromOrderTool } from './shipping.js'
 
@@ -7,11 +7,26 @@ type OrderToolShippedItem = {
   tracking_number: string
   shipping_address: string
   parcel_items: ParcelLine[]
+  content_summary?: string
   friend_name: string
   remark: string
   china_tracking: string
   shipped_at: string | null
   shipping_method: string
+}
+
+function resolveParcelItems(item: OrderToolShippedItem): ParcelLine[] {
+  const fromApi = item.parcel_items ?? []
+  const legacy = parseLegacyContentSummary(item.content_summary ?? '')
+
+  if (legacy.length > fromApi.length) return legacy
+  if (fromApi.length > 0) return fromApi
+  if (legacy.length > 0) return legacy
+
+  const name = (item.friend_name || '').trim()
+  const remark = (item.remark || '').trim()
+  if (name || remark) return [{ friend_name: name, remark }]
+  return []
 }
 
 type OrderToolShippedResponse = {
@@ -43,10 +58,7 @@ export async function runOrderToolSyncCron(days = 7): Promise<{
   let synced = 0
   let arrived = 0
   for (const item of data.items ?? []) {
-    const parcelItems =
-      item.parcel_items?.length > 0
-        ? item.parcel_items
-        : [{ friend_name: item.friend_name, remark: item.remark }]
+    const parcelItems = resolveParcelItems(item)
 
     const result = await syncShippingTrackFromOrderTool({
       tracking_number: item.tracking_number,
