@@ -141,27 +141,7 @@ export async function runLycheeTomorrowReminderCron(): Promise<{
 }
 
 export async function runHotSellerReminderCron(): Promise<{ alerted: number; top_count: number }> {
-  const month = taipeiMonthRange()
-  const data = await fetchInStockHotSellers(month.dayOfMonth, 10)
-  if (!data || data.items.length === 0) return { alerted: 0, top_count: 0 }
-
-  if (await hasReminderToday('hot_seller')) {
-    return { alerted: 0, top_count: data.items.length }
-  }
-
-  await insertReminder({
-    title: '【熱銷】本月出庫 Top3',
-    body: formatHotTop3(data.items),
-    kind: 'hot_seller',
-    metadata: {
-      source: 'instock',
-      deep_link: config.instockAppUrl || config.instockApiBaseUrl,
-      period_days: month.dayOfMonth,
-      period_start: month.start,
-      period_end: month.end,
-    },
-  })
-  return { alerted: 1, top_count: data.items.length }
+  return { alerted: 0, top_count: 0 }
 }
 
 export async function getDashboardSummary() {
@@ -190,7 +170,7 @@ export async function getDashboardSummary() {
   ])
 
   const reminders = remindersRes.data ?? []
-  const upcoming = reminders.filter((r) => !r.is_read).slice(0, 8)
+  const upcoming = reminders.filter((r) => !r.is_read && r.kind !== 'hot_seller').slice(0, 8)
 
   const next_countdown = lifeCountdown?.next
     ? {

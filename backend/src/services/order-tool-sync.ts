@@ -1,10 +1,12 @@
-﻿import { config } from '../config.js'
+import { config } from '../config.js'
+import { formatShippingDisplay, type ParcelLine } from '../lib/shipping-display.js'
 import { fetchIntegrationJson } from '../lib/integration-fetch.js'
 import { syncShippingTrackFromOrderTool } from './shipping.js'
 
 type OrderToolShippedItem = {
   tracking_number: string
-  content_summary: string
+  shipping_address: string
+  parcel_items: ParcelLine[]
   friend_name: string
   remark: string
   china_tracking: string
@@ -41,14 +43,19 @@ export async function runOrderToolSyncCron(days = 7): Promise<{
   let synced = 0
   let arrived = 0
   for (const item of data.items ?? []) {
+    const parcelItems =
+      item.parcel_items?.length > 0
+        ? item.parcel_items
+        : [{ friend_name: item.friend_name, remark: item.remark }]
+
     const result = await syncShippingTrackFromOrderTool({
       tracking_number: item.tracking_number,
-      content_summary: item.content_summary || [item.friend_name, item.remark].filter(Boolean).join(' · '),
+      content_summary: formatShippingDisplay(parcelItems, item.shipping_address),
       shipping_method: item.shipping_method,
       source_meta: {
         source: 'order-tool',
-        friend_name: item.friend_name,
-        remark: item.remark,
+        shipping_address: item.shipping_address,
+        parcel_items: parcelItems,
         china_tracking: item.china_tracking,
         shipped_at: item.shipped_at,
         shipping_method: item.shipping_method,

@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { apiGet } from '../lib/api'
 
 type Track = {
@@ -34,7 +34,7 @@ export function ShippingPanel({ refreshKey }: { refreshKey: number }) {
               <span className="chip">{t.carrier}</span>
               {t.status_text ? <span style={{ marginLeft: 8 }}>{t.status_text}</span> : null}
             </p>
-            <p className="card-meta">{t.content_summary || '—'}</p>
+            <p className="card-meta" style={{ whiteSpace: 'pre-line' }}>{t.content_summary || '—'}</p>
           </article>
         ))
       )}
