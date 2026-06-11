@@ -50,7 +50,7 @@ export async function runOrderToolSyncCron(days = 7): Promise<{
 
     const result = await syncShippingTrackFromOrderTool({
       tracking_number: item.tracking_number,
-      content_summary: formatShippingDisplay(parcelItems, item.shipping_address),
+      content_summary: formatShippingDisplay(parcelItems, item.shipping_address, item.shipped_at),
       shipping_method: item.shipping_method,
       source_meta: {
         source: 'order-tool',
