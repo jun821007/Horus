@@ -25,16 +25,20 @@ export function ShippingPanel({ refreshKey }: { refreshKey: number }) {
         <div className="empty-state">尚無追蹤單號<br />Order number 最近 7 天已出轉運會自動同步</div>
       ) : (
         items.map((t) => (
-          <article key={t.tracking_number} className="card">
+          <article key={t.tracking_number} className="card card--shipping">
             <div className="card-header">
               <h3 className="card-title">{t.tracking_number}</h3>
               <span className={t.status === '已到貨' ? 'chip success' : 'chip muted'}>{t.status}</span>
             </div>
-            <p className="card-meta">
+            <div className="shipping-status-row">
               <span className="chip">{t.carrier}</span>
-              {t.status_text ? <span style={{ marginLeft: 8 }}>{t.status_text}</span> : null}
-            </p>
-            <p className="card-meta" style={{ whiteSpace: 'pre-line' }}>{t.content_summary || '—'}</p>
+              {t.status_text ? <span className="shipping-status-text">{t.status_text}</span> : null}
+            </div>
+            {t.content_summary ? (
+              <div className="shipping-detail">{t.content_summary}</div>
+            ) : (
+              <p className="card-meta">—</p>
+            )}
           </article>
         ))
       )}

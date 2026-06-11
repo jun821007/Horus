@@ -153,12 +153,48 @@ textarea {
   font-weight: 600;
   margin: 0;
   line-height: 1.35;
+  flex: 1;
+  min-width: 0;
+  word-break: break-all;
 }
 
 .card-meta {
   font-size: 13px;
   color: var(--text-secondary);
   margin: 0;
+}
+
+.card--shipping {
+  padding: 16px;
+}
+
+.shipping-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 6px 8px;
+  margin-top: 6px;
+}
+
+.shipping-status-text {
+  flex: 1 1 160px;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  word-break: break-word;
+}
+
+.shipping-detail {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text);
+  white-space: pre-line;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .card-actions {
