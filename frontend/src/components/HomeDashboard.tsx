@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { apiGet } from '../lib/api'
+import { apiGet, apiPatch } from '../lib/api'
 import type { AppPage } from '../types/app'
 
 type ReminderItem = {
@@ -82,6 +82,23 @@ export function HomeDashboard({ refreshKey, onNavigate }: Props) {
 
   useEffect(() => { void load() }, [load, refreshKey])
 
+  const markArrivalDone = async (id: string) => {
+    setSummary((prev) => {
+      if (!prev) return prev
+      const upcoming_reminders = prev.upcoming_reminders.filter((r) => r.id !== id)
+      return {
+        ...prev,
+        upcoming_reminders,
+        unread_total: Math.max(0, prev.unread_total - 1),
+      }
+    })
+    try {
+      await apiPatch(`/api/reminders/${id}/read`)
+    } catch {
+      void load()
+    }
+  }
+
   const upcoming = summary?.upcoming_reminders ?? []
   const countdowns = summary?.countdowns ?? []
   const hotPreview =
@@ -105,15 +122,37 @@ export function HomeDashboard({ refreshKey, onNavigate }: Props) {
       {upcoming.length === 0 ? (
         <div className="empty-state">尚無未讀提醒</div>
       ) : (
-        upcoming.map((r) => (
-          <article key={r.id} className="card">
-            <div className="card-header">
-              <h3 className="card-title">{r.title}</h3>
-              <span className={kindChipClass(r.kind)}>{kindLabel(r.kind)}</span>
-            </div>
-            {r.body ? <p className="card-meta">{r.body}</p> : null}
-          </article>
-        ))
+        upcoming.map((r) => {
+          const inner = (
+            <>
+              <div className="card-header">
+                <h3 className="card-title">{r.title}</h3>
+                <span className={kindChipClass(r.kind)}>{kindLabel(r.kind)}</span>
+              </div>
+              {r.body ? <p className="card-meta">{r.body}</p> : null}
+              {r.kind === 'arrival' ? <p className="card-hint">點一下標記已完成</p> : null}
+            </>
+          )
+
+          if (r.kind === 'arrival') {
+            return (
+              <button
+                key={r.id}
+                type="button"
+                className="card card-clickable reminder-card-btn"
+                onClick={() => void markArrivalDone(r.id)}
+              >
+                {inner}
+              </button>
+            )
+          }
+
+          return (
+            <article key={r.id} className="card">
+              {inner}
+            </article>
+          )
+        })
       )}
 
       {countdowns.length > 0 ? (

@@ -4,6 +4,7 @@ import { taipeiDayStartIso, taipeiTomorrowYmd, taipeiYmd } from '../lib/taipei-d
 import { taipeiMonthRange } from '../lib/taipei-month.js'
 import { getSupabase } from '../lib/supabase.js'
 import { fetchLifeCountdowns } from './life-countdown.js'
+import { isVisibleUnreadReminder } from './reminders.js'
 
 export type ReminderKind = 'general' | 'arrival' | 'ship_alert' | 'system' | 'hot_seller'
 
@@ -158,7 +159,7 @@ export async function getDashboardSummary() {
   const [remindersRes, tracksRes, ideasRes, profit, hotData, lifeCountdown, draftsRes] = await Promise.all([
     sb
       .from('reminders')
-      .select('id, title, body, kind, is_read, created_at, metadata')
+      .select('id, title, body, kind, is_read, created_at, metadata, target_ship_date')
       .order('created_at', { ascending: false })
       .limit(30),
     sb.from('shipping_tracks').select('status').eq('status', '運輸中'),
@@ -170,7 +171,7 @@ export async function getDashboardSummary() {
   ])
 
   const reminders = remindersRes.data ?? []
-  const upcoming = reminders.filter((r) => !r.is_read && r.kind !== 'hot_seller').slice(0, 8)
+  const upcoming = reminders.filter((r) => isVisibleUnreadReminder(r)).slice(0, 8)
 
   const next_countdown = lifeCountdown?.next
     ? {
@@ -199,7 +200,7 @@ export async function getDashboardSummary() {
       items: hotData?.items ?? [],
       deep_link: config.instockAppUrl || config.instockApiBaseUrl || null,
     },
-    unread_total: reminders.filter((r) => !r.is_read).length,
+    unread_total: reminders.filter((r) => isVisibleUnreadReminder(r)).length,
     shipping_in_transit: tracksRes.data?.length ?? 0,
     pending_ideas: ideasRes.data?.length ?? 0,
     profit_month_total: profit?.month_total ?? 0,

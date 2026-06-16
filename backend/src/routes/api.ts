@@ -18,6 +18,7 @@ import { checkSupabaseConnection } from '../lib/supabase-check.js'
 import { ideasRouter } from './ideas.js'
 import { formatError } from '../lib/errors.js'
 import { getDashboardSummary } from '../services/integration-cron.js'
+import { isVisibleUnreadReminder } from '../services/reminders.js'
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } })
 
@@ -104,7 +105,8 @@ apiRouter.get('/reminders', async (_req, res) => {
     .order('created_at', { ascending: false })
     .limit(100)
   if (error) return res.status(500).json({ error: error.message })
-  res.json({ items: data })
+  const items = (data ?? []).filter((r) => isVisibleUnreadReminder(r))
+  res.json({ items })
 })
 
 apiRouter.patch('/reminders/:id/read', async (req, res) => {

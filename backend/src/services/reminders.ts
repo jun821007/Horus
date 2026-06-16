@@ -1,6 +1,30 @@
+import { taipeiYmd } from '../lib/taipei-date.js'
 import { getSupabase } from '../lib/supabase.js'
 
 export type ReminderKind = 'general' | 'arrival' | 'ship_alert' | 'system' | 'hot_seller'
+
+export type ReminderVisibility = {
+  kind: string
+  is_read: boolean
+  target_ship_date?: string | null
+}
+
+export function isExpiredShipAlert(
+  reminder: Pick<ReminderVisibility, 'kind' | 'target_ship_date'>,
+  today = taipeiYmd(),
+): boolean {
+  if (reminder.kind !== 'ship_alert') return false
+  const date = (reminder.target_ship_date || '').trim()
+  if (!date) return false
+  return date < today
+}
+
+export function isVisibleUnreadReminder(reminder: ReminderVisibility): boolean {
+  if (reminder.is_read) return false
+  if (reminder.kind === 'hot_seller') return false
+  if (isExpiredShipAlert(reminder)) return false
+  return true
+}
 
 export async function pushReminder(
   title: string,
