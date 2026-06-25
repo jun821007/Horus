@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ArrivalAlertModal } from './components/ArrivalAlertModal'
 import { BodyPanel } from './components/BodyPanel'
 import { HomeDashboard } from './components/HomeDashboard'
 import { IdeasPanel } from './components/IdeasPanel'
@@ -65,6 +66,7 @@ export default function App() {
       </main>
 
       <Toast message={toast?.text ?? null} err={toast?.err} />
+      <ArrivalAlertModal refreshKey={refreshKey} onAcknowledged={bump} />
     </div>
   )
 }

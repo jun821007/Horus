@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --bg: #0f1419;
   --bg-elevated: #1a2332;
   --bg-card: #1e2838;
@@ -197,6 +197,91 @@ textarea {
   overflow-wrap: anywhere;
 }
 
+
+.shipping-logistics {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.shipping-check-line {
+  margin: 0 0 4px;
+  color: var(--text-muted);
+}
+
+.shipping-cargo-line {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.arrival-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: rgba(0, 0, 0, 0.6);
+  animation: fadeIn 0.2s ease;
+}
+
+.arrival-modal {
+  width: 100%;
+  max-width: 400px;
+  max-height: min(80dvh, 520px);
+  overflow-y: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 18px 18px;
+  box-shadow: var(--shadow);
+}
+
+.arrival-modal-title {
+  margin: 0 0 6px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.arrival-modal-desc {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.arrival-modal-list {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.arrival-modal-item {
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+.arrival-modal-item-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.arrival-modal-item-body {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.arrival-modal-btn {
+  width: 100%;
+}
 .card-actions {
   display: flex;
   gap: 8px;
@@ -974,3 +1059,4 @@ textarea {
   border-bottom: 1px solid var(--border);
   font-size: 14px;
 }
+

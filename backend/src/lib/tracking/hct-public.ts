@@ -49,12 +49,22 @@ function extractHctEvents(html: string, trackingNumber: string): string[] {
   if (events.length === 0) {
     const text = $.text().replace(/\s+/g, ' ')
     if (text.includes(trackingNumber)) {
-      const meta = text.match(/查貨號碼：\s*\d+\s*查貨時間：[^ ]+ [^ ]+ [^ ]+/)
-      if (meta) events.push(meta[0])
+      const statusBits = text.match(/(正常配交|到著|配達|配送中|集貨|發送|持回|拒收|取件|送達)[^。\n]{0,50}/g)
+      if (statusBits?.length) events.push(statusBits[statusBits.length - 1])
     }
   }
 
   return events
+}
+
+function isHctMetaLine(line: string): boolean {
+  return /查貨號碼|查貨時間/.test(line) && !/配送|配達|到著|集貨|發送|送達|正常配交|取件|持回|拒收/.test(line)
+}
+
+function pickLatestEvent(events: string[]): string | null {
+  const real = events.filter((e) => !isHctMetaLine(e))
+  if (real.length === 0) return null
+  return real[0] ?? real[real.length - 1] ?? null
 }
 
 function parseHctResult(html: string, trackingNumber: string): ScrapeResult | null {
@@ -80,7 +90,19 @@ function parseHctResult(html: string, trackingNumber: string): ScrapeResult | nu
     return null
   }
 
-  const latest = events[0] ?? events[events.length - 1]
+  const latest = pickLatestEvent(events)
+  if (!latest) {
+    const statusBits = text.match(/(正常配交|到著|配達|配送中|集貨|發送|持回|拒收|取件|送達)[^。\n]{0,50}/g)
+    if (statusBits?.length) {
+      const fallback = statusBits[statusBits.length - 1]
+      return {
+        delivered: isArrivedStatus('新竹物流', fallback),
+        statusText: fallback,
+        events: statusBits,
+      }
+    }
+    return { delivered: false, statusText: '暫無貨態明細', events: [] }
+  }
   return {
     delivered: isArrivedStatus('新竹物流', latest),
     statusText: latest,

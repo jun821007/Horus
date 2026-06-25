@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { apiGet } from '../lib/api'
+import { formatCargoStatus, formatLastCheck } from '../lib/shipping-ui'
 
 type Track = {
   tracking_number: string
@@ -24,25 +25,32 @@ export function ShippingPanel({ refreshKey }: { refreshKey: number }) {
       {items.length === 0 ? (
         <div className="empty-state">尚無追蹤單號<br />Order number 最近 7 天已出轉運會自動同步</div>
       ) : (
-        items.map((t) => (
-          <article key={t.tracking_number} className="card card--shipping">
-            <div className="card-header">
-              <h3 className="card-title">{t.tracking_number}</h3>
-              <span className={t.status === '已到貨' ? 'chip success' : 'chip muted'}>{t.status}</span>
-            </div>
-            <div className="shipping-status-row">
-              <span className="chip">{t.carrier}</span>
-              {t.status_text ? <span className="shipping-status-text">{t.status_text}</span> : null}
-            </div>
-            {t.content_summary ? (
-              <div className="shipping-detail">{t.content_summary}</div>
-            ) : (
-              <p className="card-meta">—</p>
-            )}
-          </article>
-        ))
+        items.map((t) => {
+          const lastCheck = formatLastCheck(t.last_check_date)
+          const cargoStatus = formatCargoStatus(t.status_text)
+
+          return (
+            <article key={t.tracking_number} className="card card--shipping">
+              <div className="card-header">
+                <h3 className="card-title">{t.tracking_number}</h3>
+                <span className={t.status === '已到貨' ? 'chip success' : 'chip muted'}>{t.status}</span>
+              </div>
+              <div className="shipping-status-row">
+                <span className="chip">{t.carrier}</span>
+              </div>
+              <div className="shipping-logistics">
+                {lastCheck ? <p className="shipping-check-line">最後查詢：{lastCheck}</p> : null}
+                <p className="shipping-cargo-line">貨態：{cargoStatus}</p>
+              </div>
+              {t.content_summary ? (
+                <div className="shipping-detail">{t.content_summary}</div>
+              ) : (
+                <p className="card-meta">—</p>
+              )}
+            </article>
+          )
+        })
       )}
     </div>
   )
 }
-
