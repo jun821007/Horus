@@ -57,10 +57,9 @@ cronRouter.post('/ship-reminder', async (_req, res) => {
 cronRouter.post('/daily', async (_req, res) => {
   try {
     const orderTool = await runOrderToolSyncCron(7)
-    const tracking = await runDailyTrackingCron()
     const cleanup = await runCleanupDeliveredTracks()
     const lychee = await runLycheeTomorrowReminderCron()
-    res.json({ ok: true, orderTool, tracking, cleanup, lychee })
+    res.json({ ok: true, orderTool, cleanup, lychee })
   } catch (e) {
     res.status(500).json({ ok: false, error: String(e) })
   }

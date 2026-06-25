@@ -96,6 +96,7 @@ export async function runOrderToolSyncCron(days = 7): Promise<{
       tracking_number: item.tracking_number,
       content_summary: formatShippingDisplay(parcelItems, shippingAddress, item.shipped_at),
       shipping_method: item.shipping_method,
+      query_carrier: false,
       source_meta: {
         source: 'order-tool',
         shipping_address: shippingAddress,

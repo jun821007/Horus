@@ -50,9 +50,24 @@ npm run dev
 
 | 路徑 | 說明 |
 |------|------|
-| `POST /cron/tracking-daily` | 每日查詢物流，到貨寫入提醒 |
+| `POST /cron/daily` | 同步 Order number 單號、清理已到貨、荔枝明天提醒（**不查物流**） |
+| `POST /cron/tracking-daily` | 查詢所有運輸中單號物流，到貨寫入提醒 |
+
+**cron-job.org 建議排程（Asia/Taipei）**
+
+| 時間 | URL | 說明 |
+|------|-----|------|
+| 12:00 | `/cron/daily` | 輕量日更 |
+| 12:00 | `/cron/tracking-daily` | 中午查物流 |
+| 16:00 | `/cron/tracking-daily` | 下午再查一次 |
+
+認證：Header `x-cron-secret` 或網址 `?secret=`。物流查詢較慢，請勿把 `tracking-daily` 塞進 `daily`，以免 cron-job 逾時。
+
+其他：
+
+| 路徑 | 說明 |
+|------|------|
 | `POST /cron/ship-reminder` | 篩選明天 `target_ship_date`，發出貨預警 |
-| `POST /cron/daily` | 合併執行上述兩項 |
 
 範例（curl）：
 

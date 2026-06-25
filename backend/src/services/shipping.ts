@@ -31,6 +31,7 @@ export async function syncShippingTrackFromOrderTool(input: {
   content_summary: string
   shipping_method?: string | null
   source_meta?: Record<string, unknown>
+  query_carrier?: boolean
 }): Promise<{ tracking_number: string; carrier: Carrier; arrived: boolean }> {
   const carrier = resolveCarrier(input.tracking_number, input.shipping_method)
   const tn = normalizeTrackingNumber(input.tracking_number, carrier)
@@ -47,8 +48,9 @@ export async function syncShippingTrackFromOrderTool(input: {
   let arrived = false
   let statusText: string | null = null
   const contentSummary = input.content_summary || existing?.content_summary || ''
+  const shouldQueryCarrier = input.query_carrier !== false && status !== '已到貨'
 
-  if (status !== '已到貨') {
+  if (shouldQueryCarrier) {
     const result = await queryCarrierStatus(carrier, tn)
     statusText = result.statusText
     if (result.delivered) {
@@ -62,11 +64,13 @@ export async function syncShippingTrackFromOrderTool(input: {
     carrier,
     content_summary: contentSummary,
     status,
-    last_check_date: new Date().toISOString(),
     raw_input: input.source_meta ? JSON.stringify(input.source_meta) : null,
   }
-  if (statusText) row.status_text = statusText
-  if (arrived) row.arrived_at = new Date().toISOString()
+  if (shouldQueryCarrier) {
+    row.last_check_date = new Date().toISOString()
+    if (statusText) row.status_text = statusText
+    if (arrived) row.arrived_at = new Date().toISOString()
+  }
 
   const { error } = await sb.from('shipping_tracks').upsert(row, { onConflict: 'tracking_number' })
   if (error) throw error
