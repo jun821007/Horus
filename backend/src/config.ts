@@ -40,6 +40,9 @@ export const config = {
     .filter(Boolean),
   trackingMaxRetries: Math.max(1, Number(process.env.TRACKING_MAX_RETRIES ?? 12) || 12),
   trackingQueryDelayMs: Math.max(0, Number(process.env.TRACKING_QUERY_DELAY_MS ?? 1500) || 1500),
+  vapidPublicKey: trim('VAPID_PUBLIC_KEY'),
+  vapidPrivateKey: trim('VAPID_PRIVATE_KEY'),
+  vapidSubject: trim('VAPID_SUBJECT') || 'mailto:horus@localhost',
 }
 
 export function validateSupabaseUrl(url: string): string | null {

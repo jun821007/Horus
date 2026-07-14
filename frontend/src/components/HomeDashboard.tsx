@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { apiGet, apiPatch } from '../lib/api'
+import { PushOptInBanner } from './PushOptInBanner'
 import type { AppPage } from '../types/app'
 
 type ReminderItem = {
@@ -117,6 +118,8 @@ export function HomeDashboard({ refreshKey, onNavigate }: Props) {
   return (
     <div className="panel">
       <h2 className="page-title">今日總覽</h2>
+
+      <PushOptInBanner />
 
       <div className="section-title">即將到來的提醒</div>
       {upcoming.length === 0 ? (

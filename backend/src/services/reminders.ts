@@ -51,6 +51,13 @@ export async function pushReminder(
 }
 
 export async function notifyArrival(carrier: string, trackingNumber: string, contentSummary: string): Promise<void> {
+  const title = '【到貨】請領貨'
   const body = carrier + ' ' + trackingNumber + ' 已到貨。' + (contentSummary || '（未填）') + ' — 請領貨'
-  await pushReminder('【到貨】請領貨', body, 'arrival', { related_tracking: trackingNumber })
+  await pushReminder(title, body, 'arrival', { related_tracking: trackingNumber })
+  try {
+    const { sendArrivalPush } = await import('../lib/web-push.js')
+    await sendArrivalPush(title, body, trackingNumber)
+  } catch (e) {
+    console.warn('[notifyArrival] web push failed', e)
+  }
 }

@@ -19,6 +19,7 @@ import { ideasRouter } from './ideas.js'
 import { formatError } from '../lib/errors.js'
 import { getDashboardSummary } from '../services/integration-cron.js'
 import { isVisibleUnreadReminder } from '../services/reminders.js'
+import { deletePushSubscription, getVapidPublicKey, upsertPushSubscription } from '../lib/web-push.js'
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } })
 
@@ -114,6 +115,48 @@ apiRouter.patch('/reminders/:id/read', async (req, res) => {
   const { error } = await sb.from('reminders').update({ is_read: true }).eq('id', req.params.id)
   if (error) return res.status(500).json({ error: error.message })
   res.json({ ok: true })
+})
+
+
+apiRouter.get('/push/vapid-public-key', (_req, res) => {
+  const key = getVapidPublicKey()
+  if (!key) return res.status(503).json({ ok: false, error: 'VAPID_PUBLIC_KEY not configured' })
+  res.json({ ok: true, publicKey: key })
+})
+
+const pushSubscribeSchema = z.object({
+  endpoint: z.string().url(),
+  keys: z.object({
+    p256dh: z.string().min(1),
+    auth: z.string().min(1),
+  }),
+})
+
+apiRouter.post('/push/subscribe', async (req, res) => {
+  const parsed = pushSubscribeSchema.safeParse(req.body)
+  if (!parsed.success) return res.status(400).json({ ok: false, error: parsed.error.flatten() })
+  try {
+    await upsertPushSubscription({
+      endpoint: parsed.data.endpoint,
+      p256dh: parsed.data.keys.p256dh,
+      auth: parsed.data.keys.auth,
+      user_agent: req.header('user-agent'),
+    })
+    res.json({ ok: true })
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e) })
+  }
+})
+
+apiRouter.delete('/push/subscribe', async (req, res) => {
+  const endpoint = typeof req.body?.endpoint === 'string' ? req.body.endpoint : ''
+  if (!endpoint) return res.status(400).json({ ok: false, error: 'endpoint required' })
+  try {
+    await deletePushSubscription(endpoint)
+    res.json({ ok: true })
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e) })
+  }
 })
 
 apiRouter.get('/lychee-shipments', async (_req, res) => {

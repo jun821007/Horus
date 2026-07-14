@@ -1,7 +1,7 @@
-﻿{
+{
   "name": "Horus",
   "short_name": "Horus",
-  "description": "?琿陌?臭???繚 ?典??拚銝剜??,
+  "description": "Horus control center",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f1419",
@@ -9,10 +9,15 @@
   "icons": [
     {
       "src": "/icon.png",
-      "sizes": "806x805",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     }
   ]
 }
-
