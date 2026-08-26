@@ -1,4 +1,5 @@
 import dns from 'node:dns'
+import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import express from 'express'
 
@@ -10,8 +11,16 @@ import { cronRouter } from './routes/cron.js'
 assertBackendConfig()
 
 const app = express()
-app.use(cors({ origin: config.corsOrigin }))
+const corsOrigin = config.corsOrigin === '*' ? true : config.corsOrigin
+app.use(
+  cors({
+    origin: corsOrigin,
+    credentials: true,
+  }),
+)
+app.use(cookieParser())
 app.use(express.json({ limit: '2mb' }))
+app.set('trust proxy', 1)
 
 app.get('/', (_req, res) => {
   res.json({ ok: true, service: 'horus', docs: '/api/health' })

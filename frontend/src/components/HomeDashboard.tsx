@@ -55,6 +55,8 @@ type DashboardSummary = {
 type Props = {
   refreshKey: number
   onNavigate: (page: AppPage) => void
+  username?: string
+  onLogout?: () => void
 }
 
 function kindLabel(kind: string): string {
@@ -73,7 +75,7 @@ function money(n: number) {
   return `$${Math.round(n).toLocaleString()}`
 }
 
-export function HomeDashboard({ refreshKey, onNavigate }: Props) {
+export function HomeDashboard({ refreshKey, onNavigate, username, onLogout }: Props) {
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
 
   const load = useCallback(async () => {
@@ -117,7 +119,15 @@ export function HomeDashboard({ refreshKey, onNavigate }: Props) {
 
   return (
     <div className="panel">
-      <h2 className="page-title">今日總覽</h2>
+      <div className="home-top">
+        <h2 className="page-title">主控台</h2>
+        {onLogout ? (
+          <button type="button" className="btn btn-sm home-logout" onClick={onLogout}>
+            登出{username ? `（${username}）` : ''}
+          </button>
+        ) : null}
+      </div>
+      <p className="page-desc">今日總覽</p>
 
       <PushOptInBanner />
 

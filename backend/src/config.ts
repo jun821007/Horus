@@ -43,6 +43,11 @@ export const config = {
   vapidPublicKey: trim('VAPID_PUBLIC_KEY'),
   vapidPrivateKey: trim('VAPID_PRIVATE_KEY'),
   vapidSubject: trim('VAPID_SUBJECT') || 'mailto:horus@localhost',
+  authUsername: trim('AUTH_USERNAME'),
+  authPasswordHash: trim('AUTH_PASSWORD_HASH'),
+  authSessionSecret: trim('AUTH_SESSION_SECRET'),
+  authCookieSameSite: (trim('AUTH_COOKIE_SAMESITE').toLowerCase() || 'none') as 'none' | 'lax' | 'strict',
+  authRememberDays: Math.max(1, Number(process.env.AUTH_REMEMBER_DAYS ?? 36500) || 36500),
 }
 
 export function validateSupabaseUrl(url: string): string | null {
@@ -62,6 +67,9 @@ export function assertBackendConfig(): void {
   } else {
     const urlErr = validateSupabaseUrl(config.supabaseUrl)
     if (urlErr) console.warn(`[horus] ${urlErr}`)
+  }
+  if (!config.authUsername || !config.authPasswordHash || !config.authSessionSecret) {
+    console.warn('[horus] AUTH_USERNAME / AUTH_PASSWORD_HASH / AUTH_SESSION_SECRET not set — login will fail')
   }
   if (!config.geminiApiKey) {
     console.warn('[horus] GEMINI_API_KEY not set — AI ingest will fail')

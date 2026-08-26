@@ -20,17 +20,24 @@ import { formatError } from '../lib/errors.js'
 import { getDashboardSummary } from '../services/integration-cron.js'
 import { isVisibleUnreadReminder } from '../services/reminders.js'
 import { deletePushSubscription, getVapidPublicKey, upsertPushSubscription } from '../lib/web-push.js'
+import { requireAuth } from '../middleware/requireAuth.js'
+import { authRouter } from './auth.js'
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } })
 
 export const apiRouter = Router()
 
-/** 想法輸入器（獨立於 /ingest） */
-apiRouter.use('/ideas', ideasRouter)
-
 apiRouter.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'horus-backend' })
 })
+
+apiRouter.use('/auth', authRouter)
+
+apiRouter.use(requireAuth)
+
+/** 想法輸入器（獨立於 /ingest） */
+apiRouter.use('/ideas', ideasRouter)
+
 
 /** 診斷 Supabase 連線（不洩漏 key） */
 apiRouter.get('/supabase-check', async (_req, res) => {
